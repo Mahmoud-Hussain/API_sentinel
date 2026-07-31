@@ -7,8 +7,137 @@ import asyncio
 from dataclasses import dataclass
 from enum import Enum
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 import yaml
+
+
+# ===========================================================================
+# Standalone utility functions for spec loading and path matching
+# ===========================================================================
+
+
+def load_openapi_spec(spec_path: str) -> dict:
+    """
+    Load and parse an OpenAPI specification file (YAML or JSON).
+
+    Parameters
+    ----------
+    spec_path : str
+        Filesystem path to the OpenAPI specification file.
+        Supports both YAML (.yaml, .yml) and JSON (.json) formats.
+
+    Returns
+    -------
+    dict
+        The parsed OpenAPI specification as a Python dictionary.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the spec file does not exist at the given path.
+    yaml.YAMLError
+        If the YAML/JSON content is malformed.
+
+    Examples
+    --------
+    >>> spec = load_openapi_spec("openapi.yaml")
+    >>> spec["openapi"]
+    '3.0.3'
+    >>> list(spec["paths"].keys())
+    ['/api/v1/users', '/api/v1/users/{id}', '/api/v1/auth/login']
+    """
+    with open(spec_path, "r", encoding="utf-8") as f:
+        if spec_path.endswith(".json"):
+            import json
+            return json.load(f)
+        else:
+            return yaml.safe_load(f)
+
+
+def match_route(live_path: str, openapi_paths: list) -> Optional[str]:
+    """
+    Match a concrete runtime URL path against a list of OpenAPI path templates.
+
+    Converts dynamic path segments in OpenAPI templates (e.g., ``{id}``,
+    ``{user_id}``) into regex patterns that match any non-slash characters.
+    This allows concrete URLs like ``/api/v1/users/94a82f3c`` to be matched
+    against parameterized templates like ``/api/v1/users/{id}``.
+
+    The matching algorithm:
+    1. First attempts an exact string match (for static paths).
+    2. Then converts each OpenAPI template's ``{param}`` segments into
+       regex groups matching ``[^/]+`` (one or more non-slash characters).
+    3. Returns the first matching template, preferring more specific
+       (longer) templates over shorter ones.
+
+    Parameters
+    ----------
+    live_path : str
+        The actual runtime URL path from an HTTP request
+        (e.g., ``/api/v1/users/94a82f3c``, ``/api/v1/users``).
+    openapi_paths : list[str]
+        A list of OpenAPI path template strings
+        (e.g., ``['/api/v1/users', '/api/v1/users/{id}']``).
+
+    Returns
+    -------
+    str | None
+        The matching OpenAPI path template string if found, otherwise ``None``.
+
+    Examples
+    --------
+    >>> paths = ['/api/v1/users', '/api/v1/users/{id}', '/api/v1/auth/login']
+
+    >>> match_route('/api/v1/users', paths)
+    '/api/v1/users'
+
+    >>> match_route('/api/v1/users/94a82f3c', paths)
+    '/api/v1/users/{id}'
+
+    >>> match_route('/api/v1/users/123', paths)
+    '/api/v1/users/{id}'
+
+    >>> match_route('/api/v1/auth/login', paths)
+    '/api/v1/auth/login'
+
+    >>> match_route('/api/v1/unknown/endpoint', paths) is None
+    True
+    """
+    # Normalize: strip trailing slash (except for root "/")
+    clean_path = live_path.rstrip("/") if len(live_path) > 1 else live_path
+
+    # 1. Attempt exact match first (fastest path for static routes)
+    if clean_path in openapi_paths:
+        return clean_path
+
+    # 2. Sort templates by specificity: longer templates first, so that
+    #    /api/v1/users/{id}/posts/{post_id} is tried before /api/v1/users/{id}
+    sorted_templates = sorted(openapi_paths, key=lambda p: -len(p))
+
+    # 3. Regex-based matching for parameterized paths
+    for template in sorted_templates:
+        # Skip templates without parameters (already handled by exact match)
+        if "{" not in template:
+            continue
+
+        # Convert {param_name} to a regex group matching one or more non-slash chars.
+        # Supports various parameter patterns:
+        #   - UUIDs:    94a82f3c-1234-5678-9abc-def012345678
+        #   - Integers: 42, 9999
+        #   - Slugs:    my-resource-name
+        #   - Base64:   dXNlcjoxMjM=
+        regex_pattern = re.sub(r"\{[^}]+\}", r"[^/]+", template)
+        regex = re.compile(f"^{regex_pattern}$")
+
+        if regex.match(clean_path):
+            return template
+
+    return None
+
+
+# ===========================================================================
+# Enums and data classes
+# ===========================================================================
 
 
 class DriftSeverity(str, Enum):
@@ -39,6 +168,11 @@ class DriftIssue:
     actual: Optional[Any] = None
 
 
+# ===========================================================================
+# OpenAPI Spec Parser class
+# ===========================================================================
+
+
 class OpenAPISpecParser:
     """Parses and resolves OpenAPI spec paths, methods, components, and schemas."""
 
@@ -51,19 +185,14 @@ class OpenAPISpecParser:
 
     @classmethod
     def from_file(cls, filepath: str) -> "OpenAPISpecParser":
-        with open(filepath, "r", encoding="utf-8") as f:
-            if filepath.endswith(".json"):
-                import json
-
-                data = json.load(f)
-            else:
-                data = yaml.safe_load(f)
+        """Create an OpenAPISpecParser from a spec file using load_openapi_spec."""
+        data = load_openapi_spec(filepath)
         return cls(data)
 
     def _compile_routes(self):
         for path_pattern, path_item in self.paths.items():
-            # Convert OpenAPI path parameters like /users/{id} to regex ^/users/(?P<id>[^/]+)$
-            regex_pattern = re.sub(r"\{([^}]+)\}", r"[^/]+", path_pattern)
+            # Convert OpenAPI path parameters like /users/{id} to regex ^/users/[^/]+$
+            regex_pattern = re.sub(r"\{[^}]+\}", r"[^/]+", path_pattern)
             regex = re.compile(f"^{regex_pattern}$")
             self._compiled_routes.append((regex, path_pattern, path_item))
 
@@ -87,13 +216,10 @@ class OpenAPISpecParser:
 
     def match_route(self, request_path: str) -> Optional[Tuple[str, Dict[str, Any]]]:
         """Finds matching path template and path item for an incoming request path."""
-        # Strip trailing slash except for root
-        clean_path = request_path.rstrip("/") if len(request_path) > 1 else request_path
-
-        for regex, path_template, path_item in self._compiled_routes:
-            if regex.match(clean_path):
-                return path_template, path_item
-
+        # Use the standalone match_route function for path matching
+        matched_template = match_route(request_path, list(self.paths.keys()))
+        if matched_template:
+            return matched_template, self.paths[matched_template]
         return None
 
     def get_operation(self, request_path: str, method: str) -> Optional[Tuple[str, Dict[str, Any]]]:
@@ -105,6 +231,11 @@ class OpenAPISpecParser:
         if operation is None:
             return None
         return path_template, operation
+
+
+# ===========================================================================
+# API Diff Engine class
+# ===========================================================================
 
 
 class APIDiffEngine:
@@ -398,4 +529,3 @@ class APIDiffEngine:
             # In a production deployment you would log this to your
             # observability platform (e.g. Sentry, Datadog) here.
             pass
-
