@@ -1,4 +1,196 @@
 """
+API Sentinel - Validation Report
+Defines the ValidationReport dataclass that captures the result of validating
+runtime data against an OpenAPI specification.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+
+class ValidationStatus(str, Enum):
+    """Overall validation outcome."""
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    WARNING = "WARNING"
+
+
+class ValidationSeverity(str, Enum):
+    """Severity level for individual validation differences."""
+    ERROR = "ERROR"
+    WARNING = "WARNING"
+    INFO = "INFO"
+
+
+class DifferenceType(str, Enum):
+    """Classification of schema differences detected during validation."""
+    MISSING_FIELD = "MISSING_FIELD"
+    EXTRA_FIELD = "EXTRA_FIELD"
+    TYPE_MISMATCH = "TYPE_MISMATCH"
+    ENUM_VIOLATION = "ENUM_VIOLATION"
+    REQUIRED_FIELD_VIOLATION = "REQUIRED_FIELD_VIOLATION"
+    NULLABLE_VIOLATION = "NULLABLE_VIOLATION"
+    FORMAT_MISMATCH = "FORMAT_MISMATCH"
+    UNDOCUMENTED_ENDPOINT = "UNDOCUMENTED_ENDPOINT"
+    UNDOCUMENTED_STATUS_CODE = "UNDOCUMENTED_STATUS_CODE"
+    UNDOCUMENTED_QUERY_PARAM = "UNDOCUMENTED_QUERY_PARAM"
+    MISSING_REQUIRED_QUERY_PARAM = "MISSING_REQUIRED_QUERY_PARAM"
+    METHOD_NOT_ALLOWED = "METHOD_NOT_ALLOWED"
+    CONTENT_TYPE_MISMATCH = "CONTENT_TYPE_MISMATCH"
+    PATH_PARAM_TYPE_MISMATCH = "PATH_PARAM_TYPE_MISMATCH"
+
+
+@dataclass
+class Difference:
+    """
+    A single schema difference found during validation.
+
+    Attributes
+    ----------
+    diff_type : DifferenceType
+        The classification of this difference.
+    severity : ValidationSeverity
+        How critical this difference is.
+    location : str
+        Where in the request/response the difference was found.
+        Examples: 'request_body', 'response_body', 'query_params',
+                  'path_params', 'status_code', 'content_type'
+    json_path : str
+        JSON path to the specific field (e.g., '$.user.name', '$.items[0].id').
+    message : str
+        Human-readable description of the difference.
+    expected : Any
+        What the OpenAPI spec defines.
+    actual : Any
+        What was observed at runtime.
+    """
+    diff_type: DifferenceType
+    severity: ValidationSeverity
+    location: str
+    json_path: str
+    message: str
+    expected: Any = None
+    actual: Any = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize to a plain dictionary."""
+        return {
+            "diff_type": self.diff_type.value,
+            "severity": self.severity.value,
+            "location": self.location,
+            "json_path": self.json_path,
+            "message": self.message,
+            "expected": self.expected,
+            "actual": self.actual,
+        }
+
+
+@dataclass
+class ValidationReport:
+    """
+    Complete validation report for a single runtime request/response cycle.
+
+    Attributes
+    ----------
+    endpoint : str
+        The matched OpenAPI path template (e.g., '/api/v1/users/{id}').
+    method : str
+        HTTP method (GET, POST, PUT, DELETE, PATCH, etc.).
+    status : ValidationStatus
+        Overall validation outcome (PASSED, FAILED, WARNING).
+    severity : ValidationSeverity
+        Highest severity among all differences found.
+    status_code : int
+        The HTTP response status code observed at runtime.
+    expected_schema : dict
+        The expected schema from the OpenAPI specification.
+    actual_schema : dict
+        The inferred schema from the runtime payload.
+    differences : List[Difference]
+        All schema differences detected.
+    timestamp : str
+        ISO 8601 timestamp of when validation was performed.
+    """
+    endpoint: str
+    method: str
+    status: ValidationStatus
+    severity: ValidationSeverity
+    status_code: int
+    expected_schema: Dict[str, Any] = field(default_factory=dict)
+    actual_schema: Dict[str, Any] = field(default_factory=dict)
+    differences: List[Difference] = field(default_factory=list)
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+    @property
+    def is_valid(self) -> bool:
+        """Returns True if no ERROR-level differences were found."""
+        return not any(
+            d.severity == ValidationSeverity.ERROR for d in self.differences
+        )
+
+    @property
+    def error_count(self) -> int:
+        """Number of ERROR-level differences."""
+        return sum(1 for d in self.differences if d.severity == ValidationSeverity.ERROR)
+
+    @property
+    def warning_count(self) -> int:
+        """Number of WARNING-level differences."""
+        return sum(1 for d in self.differences if d.severity == ValidationSeverity.WARNING)
+
+    @property
+    def info_count(self) -> int:
+        """Number of INFO-level differences."""
+        return sum(1 for d in self.differences if d.severity == ValidationSeverity.INFO)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize the full report to a plain dictionary."""
+        return {
+            "endpoint": self.endpoint,
+            "method": self.method,
+            "status": self.status.value,
+            "severity": self.severity.value,
+            "status_code": self.status_code,
+            "expected_schema": self.expected_schema,
+            "actual_schema": self.actual_schema,
+            "differences": [d.to_dict() for d in self.differences],
+            "timestamp": self.timestamp,
+        }
+
+    def summary(self) -> str:
+        """One-line human-readable summary."""
+        return (
+            f"[{self.status.value}] {self.method} {self.endpoint} "
+            f"({self.status_code}) — "
+            f"{self.error_count} errors, {self.warning_count} warnings, "
+            f"{self.info_count} info"
+        )
+
+    @classmethod
+    def create_passed(
+        cls,
+        endpoint: str,
+        method: str,
+        status_code: int,
+        expected_schema: Optional[Dict[str, Any]] = None,
+        actual_schema: Optional[Dict[str, Any]] = None,
+    ) -> "ValidationReport":
+        """Factory for a clean validation with no differences."""
+        return cls(
+            endpoint=endpoint,
+            method=method,
+            status=ValidationStatus.PASSED,
+            severity=ValidationSeverity.INFO,
+            status_code=status_code,
+            expected_schema=expected_schema or {},
+            actual_schema=actual_schema or {},
+            differences=[],
+        )
+"""
 API Sentinel - Validation Report & Data Structures
 Dataclasses and models representing validation reports, endpoint statuses, and schema drift summaries.
 """
