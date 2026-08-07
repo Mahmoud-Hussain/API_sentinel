@@ -7,7 +7,7 @@ import json
 import os
 from typing import Optional, Union
 from jinja2 import Template
-from api_sentinel.validation_report import ValidationReport
+from api_sentinel.validation_report import AggregateReport
 
 HTML_TEMPLATE_STRING = """<!DOCTYPE html>
 <html lang="en">
@@ -390,8 +390,8 @@ HTML_TEMPLATE_STRING = """<!DOCTYPE html>
 </html>"""
 
 
-def generate_html_report(report: Union[ValidationReport, dict], output_path: Optional[str] = None) -> str:
-    if isinstance(report, ValidationReport):
+def generate_html_report(report: Union[AggregateReport, dict], output_path: Optional[str] = None) -> str:
+    if isinstance(report, AggregateReport):
         report_data = report.to_dict()
     else:
         report_data = report
@@ -412,8 +412,8 @@ def generate_html_report(report: Union[ValidationReport, dict], output_path: Opt
     return html_content
 
 
-def export_json_report(report: Union[ValidationReport, dict], output_path: str, indent: int = 2) -> str:
-    if isinstance(report, ValidationReport):
+def export_json_report(report: Union[AggregateReport, dict], output_path: str, indent: int = 2) -> str:
+    if isinstance(report, AggregateReport):
         json_content = report.to_json(indent=indent)
     else:
         json_content = json.dumps(report, indent=indent)

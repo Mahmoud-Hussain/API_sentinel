@@ -28,8 +28,10 @@ def detect_auth_type(headers: Dict[str, str], query_params: Dict[str, Any]) -> s
     has_api_key_header = any(
         k in headers_lower for k in ("x-api-key", "api-key", "apikey")
     )
+    # Normalize query param keys to lowercase for case-insensitive comparison
+    query_params_lower = {k.lower(): v for k, v in query_params.items()}
     has_api_key_query = any(
-        k in query_params for k in ("api_key", "apikey", "api-key")
+        k in query_params_lower for k in ("api_key", "apikey", "api-key")
     )
     
     if has_api_key_header or has_api_key_query:

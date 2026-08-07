@@ -12,8 +12,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from api_sentinel.validation_report import (
+    AggregateReport,
     EndpointValidationResult,
-    ValidationReport,
     ValidationStatus,
 )
 from api_sentinel.diff_engine import DriftSeverity, DriftType
@@ -38,7 +38,7 @@ if os.path.exists(STATIC_DIR):
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 # Global in-memory report store for active session
-_active_report: ValidationReport = ValidationReport(
+_active_report: AggregateReport = AggregateReport(
     title="API Sentinel Schema Validation Report",
     results=[
         EndpointValidationResult(
@@ -93,13 +93,13 @@ _active_report: ValidationReport = ValidationReport(
 )
 
 
-def get_active_report() -> ValidationReport:
-    """Returns the current active ValidationReport."""
+def get_active_report() -> AggregateReport:
+    """Returns the current active AggregateReport."""
     return _active_report
 
 
-def set_active_report(report: ValidationReport) -> None:
-    """Updates the current active ValidationReport."""
+def set_active_report(report: AggregateReport) -> None:
+    """Updates the current active AggregateReport."""
     global _active_report
     _active_report = report
 
@@ -156,7 +156,7 @@ async def get_report_json():
 @app.post("/api/report")
 async def update_report_json(data: dict):
     """Updates the active ValidationReport from JSON payload."""
-    report = ValidationReport.from_dict(data)
+    report = AggregateReport.from_dict(data)
     set_active_report(report)
     return {"status": "success", "total_endpoints": report.total_endpoints}
 

@@ -8,8 +8,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api_sentinel.validation_report import (
+    AggregateReport,
     EndpointValidationResult,
-    ValidationReport,
     ValidationStatus,
 )
 from api_sentinel.diff_engine import DriftSeverity, DriftType
@@ -18,8 +18,8 @@ from dashboard.app import app, set_active_report, get_active_report
 
 
 @pytest.fixture
-def sample_report() -> ValidationReport:
-    return ValidationReport(
+def sample_report() -> AggregateReport:
+    return AggregateReport(
         title="Test Validation Report",
         results=[
             EndpointValidationResult(
@@ -83,9 +83,9 @@ def test_validation_report_metrics(sample_report: ValidationReport):
     assert report_dict["summary"]["failed_endpoints"] == 1
 
 
-def test_validation_report_json_serialization(sample_report: ValidationReport):
+def test_validation_report_json_serialization(sample_report: AggregateReport):
     json_str = sample_report.to_json()
-    reconstructed = ValidationReport.from_json(json_str)
+    reconstructed = AggregateReport.from_json(json_str)
 
     assert reconstructed.title == sample_report.title
     assert reconstructed.total_endpoints == sample_report.total_endpoints
@@ -95,7 +95,7 @@ def test_validation_report_json_serialization(sample_report: ValidationReport):
     assert reconstructed.results[2].severity == DriftSeverity.ERROR
 
 
-def test_html_report_generator(sample_report: ValidationReport, tmp_path):
+def test_html_report_generator(sample_report: AggregateReport, tmp_path):
     output_html_path = os.path.join(tmp_path, "report.html")
     html_content = generate_html_report(sample_report, output_path=output_html_path)
 
@@ -110,7 +110,7 @@ def test_html_report_generator(sample_report: ValidationReport, tmp_path):
     assert saved_html == html_content
 
 
-def test_json_report_exporter(sample_report: ValidationReport, tmp_path):
+def test_json_report_exporter(sample_report: AggregateReport, tmp_path):
     output_json_path = os.path.join(tmp_path, "report.json")
     json_content = export_json_report(sample_report, output_path=output_json_path)
 
@@ -119,7 +119,7 @@ def test_json_report_exporter(sample_report: ValidationReport, tmp_path):
     assert loaded_data["summary"]["total_endpoints"] == 3
 
 
-def test_dashboard_fastapi_endpoints(sample_report: ValidationReport):
+def test_dashboard_fastapi_endpoints(sample_report: AggregateReport):
     set_active_report(sample_report)
     client = TestClient(app)
 
@@ -153,7 +153,7 @@ def test_dashboard_fastapi_endpoints(sample_report: ValidationReport):
     assert "<!DOCTYPE html>" in resp_export_html.text
 
     # Test API Update Report
-    new_report = ValidationReport(
+    new_report = AggregateReport(
         title="Updated Report",
         results=[
             EndpointValidationResult(
