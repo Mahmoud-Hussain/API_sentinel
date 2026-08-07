@@ -15,6 +15,7 @@ from api_sentinel.inferencer import SchemaInferencer, infer_json_schema
 from api_sentinel.middleware import APISentinelMiddleware
 from api_sentinel.reporter import SentinelReporter
 from api_sentinel.validation_report import (
+    AggregateReport,
     EndpointValidationResult,
     ValidationReport,
     ValidationStatus,
@@ -28,6 +29,7 @@ __all__ = [
     "OpenAPISpecParser",
     "SchemaInferencer",
     "SentinelReporter",
+    "AggregateReport",
     "ValidationReport",
     "EndpointValidationResult",
     "ValidationStatus",

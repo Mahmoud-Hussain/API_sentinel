@@ -1,15 +1,24 @@
 """
-API Sentinel - Validation Report
-Defines the ValidationReport dataclass that captures the result of validating
-runtime data against an OpenAPI specification.
+API Sentinel - Validation Report & Data Structures
+Defines two report models:
+  - ValidationReport: single request/response cycle result (used by ContractValidator)
+  - AggregateReport:  aggregated summary over many endpoints (used by dashboard/html_report)
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import json
+from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+from api_sentinel.diff_engine import DriftIssue, DriftSeverity, DriftType
+
+
+# ===========================================================================
+# Enums
+# ===========================================================================
 
 
 class ValidationStatus(str, Enum):
@@ -42,6 +51,11 @@ class DifferenceType(str, Enum):
     METHOD_NOT_ALLOWED = "METHOD_NOT_ALLOWED"
     CONTENT_TYPE_MISMATCH = "CONTENT_TYPE_MISMATCH"
     PATH_PARAM_TYPE_MISMATCH = "PATH_PARAM_TYPE_MISMATCH"
+
+
+# ===========================================================================
+# Difference dataclass
+# ===========================================================================
 
 
 @dataclass
@@ -87,6 +101,12 @@ class Difference:
             "expected": self.expected,
             "actual": self.actual,
         }
+
+
+# ===========================================================================
+# ValidationReport — single request/response cycle result
+# (used by ContractValidator._build_report and test_validation_report.py)
+# ===========================================================================
 
 
 @dataclass
@@ -190,24 +210,12 @@ class ValidationReport:
             actual_schema=actual_schema or {},
             differences=[],
         )
-"""
-API Sentinel - Validation Report & Data Structures
-Dataclasses and models representing validation reports, endpoint statuses, and schema drift summaries.
-"""
-
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
-from enum import Enum
-import json
-from typing import Any, Dict, List, Optional
-
-from api_sentinel.diff_engine import DriftIssue, DriftSeverity, DriftType
 
 
-class ValidationStatus(str, Enum):
-    PASSED = "PASSED"
-    WARNING = "WARNING"
-    FAILED = "FAILED"
+# ===========================================================================
+# EndpointValidationResult — per-endpoint result for aggregate reports
+# (used by AggregateReport and test_dashboard_reporting.py)
+# ===========================================================================
 
 
 @dataclass
@@ -253,9 +261,15 @@ class EndpointValidationResult:
         )
 
 
+# ===========================================================================
+# AggregateReport — aggregated summary object used by dashboard/html reporting
+# (previously the second ValidationReport class — renamed to avoid collision)
+# ===========================================================================
+
+
 @dataclass
-class ValidationReport:
-    """ValidationReport aggregated summary object containing metrics and endpoint validation results."""
+class AggregateReport:
+    """AggregateReport summary object containing metrics and endpoint validation results."""
     title: str = "API Sentinel Schema Validation Report"
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     results: List[EndpointValidationResult] = field(default_factory=list)
@@ -296,7 +310,7 @@ class ValidationReport:
         return json.dumps(self.to_dict(), indent=indent)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ValidationReport":
+    def from_dict(cls, data: Dict[str, Any]) -> "AggregateReport":
         results = [EndpointValidationResult.from_dict(r) for r in data.get("results", [])]
         return cls(
             title=data.get("title", "API Sentinel Schema Validation Report"),
@@ -305,6 +319,6 @@ class ValidationReport:
         )
 
     @classmethod
-    def from_json(cls, json_str: str) -> "ValidationReport":
+    def from_json(cls, json_str: str) -> "AggregateReport":
         data = json.loads(json_str)
         return cls.from_dict(data)
