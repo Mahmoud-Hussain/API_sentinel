@@ -11,3 +11,6 @@ api_sentinel.egg-info/SOURCES.txt
 api_sentinel.egg-info/dependency_links.txt
 api_sentinel.egg-info/requires.txt
 api_sentinel.egg-info/top_level.txt
+tests/__init__.py
+tests/test_diff_engine.py
+tests/test_inferencer.py

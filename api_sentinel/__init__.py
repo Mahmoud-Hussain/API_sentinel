@@ -8,8 +8,10 @@ from api_sentinel.diff_engine import (
     DriftSeverity,
     DriftType,
     OpenAPISpecParser,
+    load_openapi_spec,
+    match_route,
 )
-from api_sentinel.inferencer import SchemaInferencer
+from api_sentinel.inferencer import SchemaInferencer, infer_json_schema
 from api_sentinel.middleware import APISentinelMiddleware
 from api_sentinel.reporter import SentinelReporter
 
@@ -24,4 +26,8 @@ __all__ = [
     "DriftIssue",
     "DriftSeverity",
     "DriftType",
+    # Standalone utility functions
+    "infer_json_schema",
+    "load_openapi_spec",
+    "match_route",
 ]
