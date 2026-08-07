@@ -14,6 +14,11 @@ from api_sentinel.diff_engine import (
 from api_sentinel.inferencer import SchemaInferencer, infer_json_schema
 from api_sentinel.middleware import APISentinelMiddleware
 from api_sentinel.reporter import SentinelReporter
+from api_sentinel.validation_report import (
+    EndpointValidationResult,
+    ValidationReport,
+    ValidationStatus,
+)
 
 __version__ = "0.1.0"
 
@@ -23,6 +28,9 @@ __all__ = [
     "OpenAPISpecParser",
     "SchemaInferencer",
     "SentinelReporter",
+    "ValidationReport",
+    "EndpointValidationResult",
+    "ValidationStatus",
     "DriftIssue",
     "DriftSeverity",
     "DriftType",
