@@ -168,3 +168,24 @@ def test_dashboard_fastapi_endpoints(sample_report: AggregateReport):
     assert resp_post.status_code == 200
     assert resp_post.json()["total_endpoints"] == 1
     assert get_active_report().results[0].endpoint == "/api/v2/new_route"
+
+    # Test API Append Result
+    append_data = {
+        "endpoint": "/api/v1/live_stream",
+        "method": "POST",
+        "status_code": 200,
+        "validation_status": "WARNING",
+        "severity": "WARNING",
+        "differences": [{"issue_type": "EXTRA_FIELD", "message": "Live drift detected"}],
+    }
+    resp_append = client.post("/api/report/append", json=append_data)
+    assert resp_append.status_code == 200
+    assert resp_append.json()["total_endpoints"] == 2
+    assert get_active_report().results[0].endpoint == "/api/v1/live_stream"
+
+    # Test API Clear Report
+    resp_clear = client.post("/api/report/clear")
+    assert resp_clear.status_code == 200
+    assert resp_clear.json()["total_endpoints"] == 0
+    assert get_active_report().total_endpoints == 0
+

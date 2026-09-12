@@ -161,6 +161,48 @@ async def login(credentials: LoginRequest) -> JSONResponse:
 
 
 # ---------------------------------------------------------------------------
+# Endpoint: GET /api/v1/users (Clean list - PASSED)
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/v1/users",
+    summary="List all users",
+    tags=["users"],
+)
+async def list_users() -> JSONResponse:
+    """Returns clean list of users matching OpenAPI spec."""
+    users = [
+        {"id": 1, "name": "Alice Wonderland", "email": "alice@example.com", "role": "admin"},
+        {"id": 2, "name": "Bob Builder", "email": "bob@example.com", "role": "user"},
+    ]
+    return JSONResponse(content=users)
+
+
+# ---------------------------------------------------------------------------
+# Endpoint: GET /api/v1/products/{id} (Custom Drift Demo)
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/v1/products/{id}",
+    summary="Retrieve a product (Demo Drift)",
+    tags=["products"],
+)
+async def get_product(
+    id: int = Path(..., description="Numeric product ID"),
+) -> JSONResponse:
+    """
+    **Intentional drift**: Returns undocumented endpoint + extra unapproved field.
+    """
+    payload = {
+        "id": id,
+        "name": "Super Sentinel Widget",
+        "price": 49.99,
+        "unapproved_extra_field": "This triggers EXTRA_FIELD drift",
+    }
+    return JSONResponse(content=payload)
+
+
+# ---------------------------------------------------------------------------
 # Dev-server entry point
 # ---------------------------------------------------------------------------
 

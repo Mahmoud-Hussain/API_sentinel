@@ -45,12 +45,14 @@ class APISentinelMiddleware(BaseHTTPMiddleware):
         enabled: bool = True,
         print_clean: bool = False,
         exclude_paths: Optional[Sequence[str]] = None,
+        dashboard_url: Optional[str] = "http://127.0.0.1:8001",
     ) -> None:
         super().__init__(app)
 
         self.openapi_path = openapi_path
         self.enabled = enabled
         self.print_clean = print_clean
+        self.dashboard_url = dashboard_url
 
         self.exclude_paths: tuple[str, ...] = self._DEFAULT_EXCLUSIONS + tuple(
             exclude_paths or ()
@@ -62,9 +64,10 @@ class APISentinelMiddleware(BaseHTTPMiddleware):
         self._reporter = SentinelReporter()
 
         logger.info(
-            "APISentinelMiddleware initialised | spec=%s | enabled=%s",
+            "APISentinelMiddleware initialised | spec=%s | enabled=%s | dashboard=%s",
             openapi_path,
             enabled,
+            dashboard_url,
         )
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -155,7 +158,7 @@ class APISentinelMiddleware(BaseHTTPMiddleware):
 
     async def _process_captured_data(self, data: RuntimeData) -> None:
         """
-        Background task to process the captured runtime data.
+        Background task to process the captured runtime data and update dashboard.
         """
         try:
             # Output structured capture information log
@@ -167,12 +170,12 @@ class APISentinelMiddleware(BaseHTTPMiddleware):
                 data.authentication_type,
             )
 
-            # Keep backward compatibility with validation logic if configured
+            # Validate against spec
             if self._diff_engine:
                 op_match = self._parser.get_operation(data.endpoint, data.method)
                 matched_path = op_match[0] if op_match else None
                 
-                await self._diff_engine.analyze_payload_async(
+                issues = await self._diff_engine.analyze_payload_async(
                     method=data.method,
                     raw_path=data.endpoint,
                     matched_path=matched_path,
@@ -183,8 +186,85 @@ class APISentinelMiddleware(BaseHTTPMiddleware):
                     reporter=self._reporter,
                     print_clean=self.print_clean,
                 )
+
+                if self.dashboard_url:
+                    await self._post_to_dashboard(data, matched_path, issues)
         except Exception:
             logger.error("Error in Sentinel capture background task", exc_info=True)
+
+    async def _post_to_dashboard(self, data: RuntimeData, matched_path: Optional[str], issues: list) -> None:
+        """Asynchronously posts single validation result to the dashboard."""
+        if not self.dashboard_url:
+            return
+        try:
+            from api_sentinel.validation_report import ValidationStatus
+            from api_sentinel.diff_engine import DriftSeverity
+
+            has_error = any(getattr(i, 'severity', None) == DriftSeverity.ERROR for i in issues)
+            has_warning = any(getattr(i, 'severity', None) == DriftSeverity.WARNING for i in issues)
+
+            if has_error:
+                status = ValidationStatus.FAILED
+                sev = DriftSeverity.ERROR
+            elif has_warning:
+                status = ValidationStatus.WARNING
+                sev = DriftSeverity.WARNING
+            else:
+                status = ValidationStatus.PASSED
+                sev = None
+
+            raw_diffs = []
+            for i in issues:
+                raw_diffs.append({
+                    "issue_type": i.issue_type.value if hasattr(i.issue_type, 'value') else str(i.issue_type),
+                    "severity": i.severity.value if hasattr(i.severity, 'value') else str(i.severity),
+                    "location": getattr(i, 'location', 'response_body'),
+                    "message": getattr(i, 'message', ''),
+                    "expected": getattr(i, 'expected', None),
+                    "actual": getattr(i, 'actual', None),
+                })
+
+            op = self._parser.get_operation(data.endpoint, data.method)
+            expected_schema = None
+            if op:
+                _, op_dict = op
+                resp_info = op_dict.get("responses", {}).get(str(data.status_code), {})
+                expected_schema = resp_info.get("content", {}).get("application/json", {}).get("schema")
+
+            payload = {
+                "endpoint": matched_path or data.endpoint,
+                "method": data.method.upper(),
+                "status_code": data.status_code,
+                "validation_status": status.value,
+                "severity": sev.value if sev else "NONE",
+                "expected_schema": expected_schema,
+                "actual_schema": data.response_body if isinstance(data.response_body, (dict, list)) else {},
+                "differences": raw_diffs,
+            }
+
+            import urllib.request
+            import json
+
+            req_data = json.dumps(payload).encode("utf-8")
+            url = f"{self.dashboard_url.rstrip('/')}/api/report/append"
+            req = urllib.request.Request(
+                url,
+                data=req_data,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+
+            def _send():
+                try:
+                    with urllib.request.urlopen(req, timeout=1) as resp:
+                        pass
+                except Exception:
+                    pass
+
+            await asyncio.to_thread(_send)
+        except Exception:
+            pass
+
 
     def _is_excluded(self, path: str) -> bool:
         return any(path.startswith(prefix) for prefix in self.exclude_paths)
