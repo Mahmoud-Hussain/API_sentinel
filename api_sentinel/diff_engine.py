@@ -483,7 +483,7 @@ class APIDiffEngine:
         response_body: Optional[Any],
         reporter: Any,
         print_clean: bool = False,
-    ) -> None:
+    ) -> List[DriftIssue]:
         """
         Coroutine designed to run as a background ``asyncio`` task (fire-and-forget).
 
@@ -501,9 +501,6 @@ class APIDiffEngine:
         """
         try:
             # Run the synchronous diff logic inside the running event loop.
-            # For CPU-light workloads (dict traversal, regex matching) this is
-            # acceptable; swap in ``asyncio.to_thread`` if profiling shows
-            # it becomes a bottleneck.
             request_issues = self.compare_request(
                 path=raw_path,
                 method=method,
@@ -524,8 +521,8 @@ class APIDiffEngine:
             elif print_clean:
                 reporter.report_clean(method, raw_path, status_code)
 
+            return all_issues
+
         except Exception:  # noqa: BLE001
             # Sentinel monitoring MUST NOT crash the host application.
-            # In a production deployment you would log this to your
-            # observability platform (e.g. Sentry, Datadog) here.
-            pass
+            return []

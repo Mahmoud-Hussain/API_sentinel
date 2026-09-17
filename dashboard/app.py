@@ -161,6 +161,35 @@ async def update_report_json(data: dict):
     return {"status": "success", "total_endpoints": report.total_endpoints}
 
 
+@app.post("/api/report/append")
+async def append_report_result(data: dict):
+    """Appends or updates an individual EndpointValidationResult in the active report."""
+    report = get_active_report()
+    try:
+        # Check if payload is an EndpointValidationResult or a full result dict
+        result = EndpointValidationResult.from_dict(data)
+        # Prepend or append to results
+        report.results.insert(0, result)
+        # Limit in-memory history to latest 100 executions to prevent memory bloat
+        if len(report.results) > 100:
+            report.results = report.results[:100]
+        from datetime import datetime, timezone
+        report.timestamp = datetime.now(timezone.utc).isoformat()
+        return {"status": "success", "total_endpoints": report.total_endpoints}
+    except Exception as exc:
+        return JSONResponse(status_code=400, content={"status": "error", "message": str(exc)})
+
+
+@app.post("/api/report/clear")
+async def clear_report():
+    """Clears all validation results in the active report."""
+    from datetime import datetime, timezone
+    report = get_active_report()
+    report.results = []
+    report.timestamp = datetime.now(timezone.utc).isoformat()
+    return {"status": "cleared", "total_endpoints": 0}
+
+
 @app.get("/api/export/json")
 async def export_json():
     """Downloads the current ValidationReport as a formatted JSON file."""
@@ -183,3 +212,4 @@ async def export_html():
         media_type="text/html",
         headers={"Content-Disposition": 'attachment; filename="validation_report.html"'},
     )
+
