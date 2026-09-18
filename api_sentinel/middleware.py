@@ -19,6 +19,7 @@ from .capture import detect_auth_type, get_content_type, safe_parse_body, saniti
 from .diff_engine import APIDiffEngine, OpenAPISpecParser
 from .reporter import SentinelReporter
 from .runtime_data import RuntimeData
+from .config import settings
 
 logger = logging.getLogger("api_sentinel.middleware")
 
@@ -231,6 +232,19 @@ class APISentinelMiddleware(BaseHTTPMiddleware):
                 resp_info = op_dict.get("responses", {}).get(str(data.status_code), {})
                 expected_schema = resp_info.get("content", {}).get("application/json", {}).get("schema")
 
+            def _mask_payload(obj):
+                if isinstance(obj, dict):
+                    return {
+                        k: "***MASKED***" if k.lower() in [f.lower() for f in settings.masked_fields] else _mask_payload(v)
+                        for k, v in obj.items()
+                    }
+                elif isinstance(obj, list):
+                    return [_mask_payload(item) for item in obj]
+                return obj
+
+            actual_schema = data.response_body if isinstance(data.response_body, (dict, list)) else {}
+            masked_actual_schema = _mask_payload(actual_schema)
+
             payload = {
                 "endpoint": matched_path or data.endpoint,
                 "method": data.method.upper(),
@@ -238,7 +252,7 @@ class APISentinelMiddleware(BaseHTTPMiddleware):
                 "validation_status": status.value,
                 "severity": sev.value if sev else "NONE",
                 "expected_schema": expected_schema,
-                "actual_schema": data.response_body if isinstance(data.response_body, (dict, list)) else {},
+                "actual_schema": masked_actual_schema,
                 "differences": raw_diffs,
             }
 
