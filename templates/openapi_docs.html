@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>OpenAPI Documentation - API Sentinel</title>
-<meta name="description" content="Manage, upload, edit, and validate the active OpenAPI specification for API Sentinel."/>
+<title>OpenAPI Documentation Setup Wizard - API Sentinel</title>
+<meta name="description" content="Guided multi-step OpenAPI specification setup wizard for API Sentinel contract monitoring and drift detection."/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
   tailwind.config = {
     darkMode: "class",
@@ -80,23 +80,23 @@
           "margin-desktop": "32px"
         },
         "fontFamily": {
-          "code-md": ["JetBrains Mono"],
-          "body-lg": ["Inter"],
-          "headline-lg": ["Geist"],
-          "headline-sm": ["Geist"],
-          "body-sm": ["Inter"],
-          "label-caps": ["Inter"],
-          "headline-md": ["Geist"],
-          "body-md": ["Inter"]
+          "code-md": ["JetBrains Mono", "monospace"],
+          "body-lg": ["Inter", "sans-serif"],
+          "headline-lg": ["Geist", "sans-serif"],
+          "headline-sm": ["Geist", "sans-serif"],
+          "body-sm": ["Inter", "sans-serif"],
+          "label-caps": ["Inter", "sans-serif"],
+          "headline-md": ["Geist", "sans-serif"],
+          "body-md": ["Inter", "sans-serif"]
         },
         "fontSize": {
           "code-md": ["13px", { "lineHeight": "20px", "fontWeight": "450" }],
           "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
-          "headline-lg": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
-          "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+          "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+          "headline-sm": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
           "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
           "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
-          "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+          "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
           "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
         }
       }
@@ -108,9 +108,9 @@
   .widget-card {
     background-color: #ffffff;
     border: 1px solid #c3c6d7;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     padding: 24px;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
   }
   .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
   .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -120,13 +120,20 @@
     tab-size: 2;
     white-space: pre;
   }
-  .drop-zone {
-    border: 2px dashed #c3c6d7;
-    transition: all 0.2s ease-in-out;
-  }
-  .drop-zone.dragover {
+  .step-pill-active {
+    background-color: #004ac6;
+    color: #ffffff;
     border-color: #004ac6;
-    background-color: #f2f3ff;
+  }
+  .step-pill-completed {
+    background-color: #e2e7ff;
+    color: #004ac6;
+    border-color: #b4c5ff;
+  }
+  .step-pill-upcoming {
+    background-color: #ffffff;
+    color: #505f76;
+    border-color: #c3c6d7;
   }
 </style>
 </head>
@@ -138,19 +145,19 @@
     <span class="material-symbols-outlined text-primary text-2xl">shield</span>
     <a href="/" class="text-headline-sm font-headline-sm font-bold text-primary hover:opacity-90">API Sentinel</a>
     <div class="hidden sm:flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-primary/10 border border-primary/30 rounded-full">
-      <span class="material-symbols-outlined text-primary text-xs">menu_book</span>
-      <span class="text-[11px] font-bold text-primary uppercase tracking-wide">Spec Manager</span>
+      <span class="material-symbols-outlined text-primary text-xs">auto_fix_high</span>
+      <span class="text-[11px] font-bold text-primary uppercase tracking-wide">OpenAPI Setup Wizard</span>
     </div>
   </div>
 
   <div class="flex items-center gap-2">
-    <a href="/" class="px-3 py-1.5 border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-variant rounded text-xs font-semibold flex items-center gap-1.5 transition-colors">
+    <a href="/" class="px-3 py-1.5 border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-variant rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors">
       <span class="material-symbols-outlined text-sm">dashboard</span> Dashboard
     </a>
-    <a href="/api/export/json" download="validation_report.json" class="px-2.5 py-1.5 border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-variant rounded text-xs font-semibold flex items-center gap-1 transition-colors">
+    <a href="/api/export/json" download="validation_report.json" class="px-2.5 py-1.5 border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-variant rounded-md text-xs font-semibold flex items-center gap-1 transition-colors">
       <span class="material-symbols-outlined text-sm">download</span> JSON
     </a>
-    <a href="/api/export/html" download="validation_report.html" class="px-2.5 py-1.5 bg-primary text-on-primary hover:opacity-90 rounded text-xs font-semibold flex items-center gap-1 transition-opacity">
+    <a href="/api/export/html" download="validation_report.html" class="px-2.5 py-1.5 bg-primary text-on-primary hover:opacity-90 rounded-md text-xs font-semibold flex items-center gap-1 transition-opacity">
       <span class="material-symbols-outlined text-sm">file_open</span> HTML
     </a>
   </div>
@@ -158,28 +165,72 @@
 
 <div class="flex h-full pt-16">
   <!-- SideNavBar -->
-  <nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-60 flex flex-col p-md bg-surface-container border-r border-outline-variant z-40 hidden md:flex">
+  <nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col p-md bg-surface-container border-r border-outline-variant z-40 hidden md:flex">
     <div class="mb-md">
       <div class="text-label-caps font-label-caps text-on-surface-variant mb-xs">NAVIGATION</div>
       <div class="text-body-sm font-body-sm text-on-surface font-semibold">API Sentinel Workspace</div>
     </div>
-    <ul class="flex flex-col gap-sm flex-1">
+    
+    <ul class="flex flex-col gap-sm mb-md">
       <li>
-        <a class="flex items-center gap-3 p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-all font-body-sm text-body-sm" href="/">
+        <a class="flex items-center gap-3 p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-all font-body-sm" href="/">
           <span class="material-symbols-outlined">dashboard</span>
           <span>Dashboard</span>
         </a>
       </li>
       <li>
-        <a class="flex items-center gap-3 p-2 bg-secondary-container text-on-secondary-container font-semibold rounded-lg active:scale-95 duration-100 font-body-sm text-body-sm" href="/openapi-docs">
-          <span class="material-symbols-outlined fill text-primary">menu_book</span>
+        <a class="flex items-center gap-3 p-2 bg-secondary-container text-on-secondary-container font-semibold rounded-lg active:scale-95 duration-100 font-body-sm" href="/openapi-docs">
+          <span class="material-symbols-outlined fill text-primary">auto_fix_high</span>
           <span>OpenAPI Docs</span>
         </a>
       </li>
     </ul>
 
+    <!-- Wizard Steps Quick-Jump in Sidebar -->
+    <div class="flex-1 flex flex-col min-h-0 border-t border-outline-variant pt-3">
+      <div class="text-[10px] uppercase font-bold text-on-surface-variant mb-2 px-1 flex items-center justify-between">
+        <span>Wizard Steps</span>
+        <span id="nav-step-count" class="text-primary font-code-md">Step 1 of 8</span>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pr-1 flex flex-col gap-1 text-xs">
+        <button onclick="goToStep(1)" id="side-step-1" class="w-full text-left px-2.5 py-2 rounded-md flex items-center gap-2.5 transition-colors font-medium bg-primary/10 text-primary font-semibold">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-primary text-white font-bold">1</span>
+          <span class="truncate">API Information</span>
+        </button>
+        <button onclick="goToStep(2)" id="side-step-2" class="w-full text-left px-2.5 py-2 rounded-md flex items-center gap-2.5 transition-colors font-medium text-on-surface-variant hover:bg-surface-variant">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-outline-variant text-on-surface font-bold">2</span>
+          <span class="truncate">Servers / Base URL</span>
+        </button>
+        <button onclick="goToStep(3)" id="side-step-3" class="w-full text-left px-2.5 py-2 rounded-md flex items-center gap-2.5 transition-colors font-medium text-on-surface-variant hover:bg-surface-variant">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-outline-variant text-on-surface font-bold">3</span>
+          <span class="truncate">Endpoints</span>
+        </button>
+        <button onclick="goToStep(4)" id="side-step-4" class="w-full text-left px-2.5 py-2 rounded-md flex items-center gap-2.5 transition-colors font-medium text-on-surface-variant hover:bg-surface-variant">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-outline-variant text-on-surface font-bold">4</span>
+          <span class="truncate">Endpoint Details</span>
+        </button>
+        <button onclick="goToStep(5)" id="side-step-5" class="w-full text-left px-2.5 py-2 rounded-md flex items-center gap-2.5 transition-colors font-medium text-on-surface-variant hover:bg-surface-variant">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-outline-variant text-on-surface font-bold">5</span>
+          <span class="truncate">Request Parameters</span>
+        </button>
+        <button onclick="goToStep(6)" id="side-step-6" class="w-full text-left px-2.5 py-2 rounded-md flex items-center gap-2.5 transition-colors font-medium text-on-surface-variant hover:bg-surface-variant">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-outline-variant text-on-surface font-bold">6</span>
+          <span class="truncate">Request Body</span>
+        </button>
+        <button onclick="goToStep(7)" id="side-step-7" class="w-full text-left px-2.5 py-2 rounded-md flex items-center gap-2.5 transition-colors font-medium text-on-surface-variant hover:bg-surface-variant">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-outline-variant text-on-surface font-bold">7</span>
+          <span class="truncate">Responses</span>
+        </button>
+        <button onclick="goToStep(8)" id="side-step-8" class="w-full text-left px-2.5 py-2 rounded-md flex items-center gap-2.5 transition-colors font-medium text-on-surface-variant hover:bg-surface-variant">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-outline-variant text-on-surface font-bold">8</span>
+          <span class="truncate">Review & Generate</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Active Spec Info Card -->
-    <div class="p-3 bg-surface border border-outline-variant rounded-lg text-xs flex flex-col gap-1">
+    <div class="mt-3 p-3 bg-surface border border-outline-variant rounded-lg text-xs flex flex-col gap-1">
       <div class="text-[10px] uppercase font-bold text-on-surface-variant flex items-center gap-1">
         <span class="material-symbols-outlined text-xs text-primary">verified</span> Active File
       </div>
@@ -188,30 +239,32 @@
   </nav>
 
   <!-- Main Content -->
-  <main class="flex-1 ml-0 md:ml-60 p-md md:p-lg overflow-y-auto h-[calc(100vh-64px)]">
-    <div class="max-w-[1440px] mx-auto">
+  <main class="flex-1 ml-0 md:ml-64 p-md md:p-lg overflow-y-auto h-[calc(100vh-64px)]">
+    <div class="max-w-5xl mx-auto flex flex-col gap-lg pb-12">
       
       <!-- Page Header -->
-      <header class="mb-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div class="flex items-center gap-sm text-on-surface-variant font-body-sm mb-1">
             <a href="/" class="hover:text-primary transition-colors">Dashboard</a>
             <span class="material-symbols-outlined text-[14px]">chevron_right</span>
-            <span class="text-on-surface font-semibold">OpenAPI Documentation</span>
+            <span class="text-on-surface font-semibold">OpenAPI Specification Management</span>
+            <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+            <span class="text-primary font-semibold">Setup Wizard</span>
           </div>
           <h1 class="font-headline-lg text-headline-lg text-on-surface">OpenAPI Specification Management</h1>
-          <p class="font-body-md text-body-md text-on-surface-variant">Upload, edit, validate, and persist the OpenAPI YAML/JSON specification used for live contract validation.</p>
+          <p class="font-body-md text-body-md text-on-surface-variant">Create and configure your company's OpenAPI 3.0 specification through guided steps to enable real-time API Sentinel drift monitoring.</p>
         </div>
 
         <!-- Global Status Badge -->
         <div id="spec-status-pill" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold {% if is_valid %}bg-emerald-500/10 text-emerald-700 border border-emerald-500/30{% else %}bg-error/10 text-error border border-error/30{% endif %}">
           <span class="material-symbols-outlined text-sm">{% if is_valid %}check_circle{% else %}error{% endif %}</span>
-          <span id="spec-status-text">{% if is_valid %}VALID SPECIFICATION{% else %}VALIDATION ERROR{% endif %}</span>
+          <span id="spec-status-text">{% if is_valid %}ACTIVE SPEC VALID{% else %}SPEC ACTION REQUIRED{% endif %}</span>
         </div>
       </header>
 
       <!-- Alert Banner for Errors / Success -->
-      <div id="toast-message" class="hidden mb-md p-3 rounded-lg border text-sm flex items-center justify-between">
+      <div id="toast-message" class="hidden p-3.5 rounded-lg border text-sm flex items-center justify-between shadow-sm transition-all">
         <div class="flex items-center gap-2">
           <span id="toast-icon" class="material-symbols-outlined text-sm"></span>
           <span id="toast-text"></span>
@@ -221,47 +274,346 @@
         </button>
       </div>
 
-      <!-- Main Layout: 2 Columns on Desktop -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+      <!-- Top Wizard Progress & Steps Bar -->
+      <div class="widget-card bg-surface-container-lowest flex flex-col gap-4">
         
-        <!-- Left Column: Upload & Editor (8 cols) -->
-        <div class="lg:col-span-8 flex flex-col gap-lg">
-          
-          <!-- Upload Area Card -->
-          <div class="widget-card">
-            <div class="flex items-center justify-between mb-sm">
-              <h2 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary text-xl">upload_file</span>
-                Upload Specification
-              </h2>
-              <span class="text-xs text-on-surface-variant font-code-md">.yaml, .yml, .json</span>
+        <!-- Progress Bar & Step Badge -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-primary text-white text-xs font-bold" id="current-step-badge">Step 1 of 8</span>
+            <span class="font-headline-sm text-sm sm:text-base font-bold text-on-surface" id="current-step-title">API Information</span>
+          </div>
+          <div class="text-xs font-medium text-on-surface-variant flex items-center gap-1.5">
+            <span id="progress-percentage">12%</span> Completed
+          </div>
+        </div>
+
+        <!-- Linear Progress Track -->
+        <div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+          <div id="wizard-progress-bar" class="h-full bg-primary rounded-full transition-all duration-300 ease-out" style="width: 12.5%;"></div>
+        </div>
+
+        <!-- Horizontal Step Pills (Scrollable on mobile) -->
+        <div class="flex items-center justify-between gap-1 sm:gap-2 overflow-x-auto pt-2 pb-1 border-t border-outline-variant">
+          <button onclick="goToStep(1)" id="step-btn-1" class="step-pill step-pill-active flex-1 min-w-[100px] py-1.5 px-2 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-white text-primary">1</span>
+            <span class="truncate">API Info</span>
+          </button>
+          <button onclick="goToStep(2)" id="step-btn-2" class="step-pill step-pill-upcoming flex-1 min-w-[100px] py-1.5 px-2 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-surface-container text-on-surface">2</span>
+            <span class="truncate">Servers</span>
+          </button>
+          <button onclick="goToStep(3)" id="step-btn-3" class="step-pill step-pill-upcoming flex-1 min-w-[100px] py-1.5 px-2 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-surface-container text-on-surface">3</span>
+            <span class="truncate">Endpoints</span>
+          </button>
+          <button onclick="goToStep(4)" id="step-btn-4" class="step-pill step-pill-upcoming flex-1 min-w-[100px] py-1.5 px-2 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-surface-container text-on-surface">4</span>
+            <span class="truncate">Details</span>
+          </button>
+          <button onclick="goToStep(5)" id="step-btn-5" class="step-pill step-pill-upcoming flex-1 min-w-[100px] py-1.5 px-2 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-surface-container text-on-surface">5</span>
+            <span class="truncate">Parameters</span>
+          </button>
+          <button onclick="goToStep(6)" id="step-btn-6" class="step-pill step-pill-upcoming flex-1 min-w-[100px] py-1.5 px-2 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-surface-container text-on-surface">6</span>
+            <span class="truncate">Body</span>
+          </button>
+          <button onclick="goToStep(7)" id="step-btn-7" class="step-pill step-pill-upcoming flex-1 min-w-[100px] py-1.5 px-2 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-surface-container text-on-surface">7</span>
+            <span class="truncate">Responses</span>
+          </button>
+          <button onclick="goToStep(8)" id="step-btn-8" class="step-pill step-pill-upcoming flex-1 min-w-[110px] py-1.5 px-2 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-surface-container text-on-surface">8</span>
+            <span class="truncate">Review</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- WIZARD STEP PANELS -->
+      <div class="wizard-container flex flex-col gap-md">
+
+        <!-- STEP 1: API Information -->
+        <div id="step-pane-1" class="step-panel widget-card flex flex-col gap-6">
+          <div class="border-b border-outline-variant pb-4">
+            <div class="flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider mb-1">
+              <span class="material-symbols-outlined text-sm">info</span> Step 1 of 8
+            </div>
+            <h2 class="text-headline-md font-headline-md text-on-surface font-bold">API Information</h2>
+            <p class="text-body-md text-on-surface-variant">Enter your company's core API identity, title, version, and contact metadata.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-on-surface flex items-center gap-1">
+                API Title / Name <span class="text-error">*</span>
+              </label>
+              <input type="text" id="wiz-api-title" class="w-full px-3.5 py-2.5 border border-outline-variant rounded-md text-sm text-on-surface bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary" placeholder="e.g. Acme Payments API" value="{{ summary.title if summary else 'API Sentinel Monitored API' }}"/>
+              <p class="text-[11px] text-on-surface-variant">The human-readable name of your company API.</p>
             </div>
 
-            <div id="drop-zone" class="drop-zone rounded-lg p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-surface hover:bg-surface-container-low">
-              <input id="file-input" type="file" accept=".yaml,.yml,.json,application/json,application/x-yaml,text/yaml" class="hidden"/>
-              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <span class="material-symbols-outlined text-2xl">cloud_upload</span>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-on-surface flex items-center gap-1">
+                API Version <span class="text-error">*</span>
+              </label>
+              <input type="text" id="wiz-api-version" class="w-full px-3.5 py-2.5 border border-outline-variant rounded-md text-sm text-on-surface bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary" placeholder="e.g. 1.0.0" value="{{ summary.version if summary else '1.0.0' }}"/>
+              <p class="text-[11px] text-on-surface-variant">Semantic version of this specification release.</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5 md:col-span-2">
+              <label class="text-xs font-semibold text-on-surface">API Description</label>
+              <textarea id="wiz-api-desc" rows="3" class="w-full px-3.5 py-2.5 border border-outline-variant rounded-md text-sm text-on-surface bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary resize-y" placeholder="Describe the purpose, scope, and capabilities of this API...">{{ summary.description if summary and summary.description else 'Production API service managed by API Sentinel runtime validator.' }}</textarea>
+              <p class="text-[11px] text-on-surface-variant">Detailed summary for consumers and documentation viewers.</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-on-surface">Contact Email</label>
+              <input type="email" id="wiz-contact-email" class="w-full px-3.5 py-2.5 border border-outline-variant rounded-md text-sm text-on-surface bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary" placeholder="api-team@example.com"/>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-on-surface">Terms of Service / Documentation URL</label>
+              <input type="url" id="wiz-terms-url" class="w-full px-3.5 py-2.5 border border-outline-variant rounded-md text-sm text-on-surface bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary" placeholder="https://example.com/terms"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Servers / Base URL -->
+        <div id="step-pane-2" class="step-panel widget-card flex flex-col gap-6 hidden">
+          <div class="border-b border-outline-variant pb-4">
+            <div class="flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider mb-1">
+              <span class="material-symbols-outlined text-sm">dns</span> Step 2 of 8
+            </div>
+            <h2 class="text-headline-md font-headline-md text-on-surface font-bold">Servers / Base URL</h2>
+            <p class="text-body-md text-on-surface-variant">Specify the target host server URLs where your API is deployed (e.g. production, staging, local).</p>
+          </div>
+
+          <div class="flex flex-col gap-4">
+            <div class="p-4 bg-surface-container-low border border-outline-variant rounded-lg flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-primary uppercase">Primary Server (Production)</span>
+                <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-700 text-[10px] font-bold rounded">Default</span>
               </div>
-              <div class="text-center">
-                <span class="font-semibold text-primary">Click to browse</span> or drag and drop your OpenAPI document
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-on-surface">Base URL</label>
+                  <input type="text" id="wiz-server-url-1" class="w-full px-3 py-2 border border-outline-variant rounded text-xs bg-surface-container-lowest font-code-md" placeholder="https://api.example.com/v1" value="http://localhost:8000"/>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-on-surface">Description</label>
+                  <input type="text" id="wiz-server-desc-1" class="w-full px-3 py-2 border border-outline-variant rounded text-xs bg-surface-container-lowest" placeholder="Production gateway" value="Local development server"/>
+                </div>
               </div>
-              <p class="text-xs text-on-surface-variant">Supports standard OpenAPI 3.0, 3.1, or Swagger 2.0 files</p>
-              <div id="uploaded-filename" class="hidden mt-2 px-3 py-1 bg-secondary-container text-on-secondary-container font-code-md text-xs rounded-full flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-xs">attach_file</span>
-                <span id="uploaded-filename-text"></span>
+            </div>
+
+            <div class="p-4 bg-surface-container-low border border-outline-variant rounded-lg flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-on-surface uppercase">Secondary Server (Staging / Testing)</span>
+                <span class="text-xs text-on-surface-variant font-code-md">Optional</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-on-surface">Base URL</label>
+                  <input type="text" id="wiz-server-url-2" class="w-full px-3 py-2 border border-outline-variant rounded text-xs bg-surface-container-lowest font-code-md" placeholder="https://staging-api.example.com/v1"/>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-semibold text-on-surface">Description</label>
+                  <input type="text" id="wiz-server-desc-2" class="w-full px-3 py-2 border border-outline-variant rounded text-xs bg-surface-container-lowest" placeholder="Staging environment for QA"/>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Specification Editor Card -->
-          <div class="widget-card flex flex-col">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-md border-b border-outline-variant gap-2 mb-md">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary text-xl">edit_document</span>
-                <h2 class="text-headline-sm font-headline-sm text-on-surface">Specification Editor</h2>
+        <!-- STEP 3: Endpoints -->
+        <div id="step-pane-3" class="step-panel widget-card flex flex-col gap-6 hidden">
+          <div class="border-b border-outline-variant pb-4">
+            <div class="flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider mb-1">
+              <span class="material-symbols-outlined text-sm">route</span> Step 3 of 8
+            </div>
+            <h2 class="text-headline-md font-headline-md text-on-surface font-bold">Endpoints & HTTP Routes</h2>
+            <p class="text-body-md text-on-surface-variant">Define the path routes and HTTP methods your application exposes for contract monitoring.</p>
+          </div>
+
+          <div class="flex flex-col gap-4">
+            <div class="p-4 bg-surface-container-lowest border border-outline-variant rounded-lg flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold text-on-surface uppercase tracking-wider">Configured Routes</h3>
+                <span class="text-xs text-primary font-semibold">Step 3 Setup</span>
               </div>
+              
+              <div class="flex flex-col gap-2">
+                <div class="p-3 bg-surface-container-low border border-outline-variant rounded-md flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-code-md bg-primary text-on-primary">GET</span>
+                    <span class="font-code-md text-xs font-semibold text-on-surface">/api/v1/users</span>
+                  </div>
+                  <span class="text-xs text-on-surface-variant truncate">List users</span>
+                </div>
+
+                <div class="p-3 bg-surface-container-low border border-outline-variant rounded-md flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-code-md bg-emerald-700 text-white">POST</span>
+                    <span class="font-code-md text-xs font-semibold text-on-surface">/api/v1/users</span>
+                  </div>
+                  <span class="text-xs text-on-surface-variant truncate">Create new user</span>
+                </div>
+
+                <div class="p-3 bg-surface-container-low border border-outline-variant rounded-md flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-code-md bg-primary text-on-primary">GET</span>
+                    <span class="font-code-md text-xs font-semibold text-on-surface">/api/v1/users/{id}</span>
+                  </div>
+                  <span class="text-xs text-on-surface-variant truncate">Get user by ID</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: Endpoint Details -->
+        <div id="step-pane-4" class="step-panel widget-card flex flex-col gap-6 hidden">
+          <div class="border-b border-outline-variant pb-4">
+            <div class="flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider mb-1">
+              <span class="material-symbols-outlined text-sm">tune</span> Step 4 of 8
+            </div>
+            <h2 class="text-headline-md font-headline-md text-on-surface font-bold">Endpoint Details</h2>
+            <p class="text-body-md text-on-surface-variant">Provide operation IDs, categories/tags, and operational descriptions for each endpoint route.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-on-surface">Primary Tag / Group</label>
+              <input type="text" id="wiz-endpoint-tag" class="w-full px-3.5 py-2.5 border border-outline-variant rounded-md text-sm text-on-surface bg-surface-container-lowest" placeholder="e.g. Users, Billing, Auth" value="Users"/>
+              <p class="text-[11px] text-on-surface-variant">Logical group for grouping documentation.</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-on-surface">Operation ID Convention</label>
+              <input type="text" id="wiz-op-id" class="w-full px-3.5 py-2.5 border border-outline-variant rounded-md text-sm text-on-surface bg-surface-container-lowest font-code-md" placeholder="e.g. listUsers, createUser" value="listUsers"/>
+              <p class="text-[11px] text-on-surface-variant">Unique identifier used for code generation.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 5: Request Parameters -->
+        <div id="step-pane-5" class="step-panel widget-card flex flex-col gap-6 hidden">
+          <div class="border-b border-outline-variant pb-4">
+            <div class="flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider mb-1">
+              <span class="material-symbols-outlined text-sm">settings_input_component</span> Step 5 of 8
+            </div>
+            <h2 class="text-headline-md font-headline-md text-on-surface font-bold">Request Parameters</h2>
+            <p class="text-body-md text-on-surface-variant">Configure path parameters, query filters, headers, and cookie definitions expected by your endpoints.</p>
+          </div>
+
+          <div class="flex flex-col gap-3">
+            <div class="p-4 bg-surface-container-low border border-outline-variant rounded-lg flex flex-col gap-3">
+              <div class="flex items-center justify-between text-xs font-bold text-on-surface uppercase">
+                <span>Parameter Definitions</span>
+                <span class="text-primary font-code-md">path / query / header</span>
+              </div>
+              <p class="text-xs text-on-surface-variant">Path parameters like <code class="font-code-md bg-surface-container px-1 py-0.5 rounded">{id}</code> and query filters like <code class="font-code-md bg-surface-container px-1 py-0.5 rounded">?limit=10&page=1</code> will be validated during runtime drift checks.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 6: Request Body -->
+        <div id="step-pane-6" class="step-panel widget-card flex flex-col gap-6 hidden">
+          <div class="border-b border-outline-variant pb-4">
+            <div class="flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider mb-1">
+              <span class="material-symbols-outlined text-sm">data_object</span> Step 6 of 8
+            </div>
+            <h2 class="text-headline-md font-headline-md text-on-surface font-bold">Request Body Schema</h2>
+            <p class="text-body-md text-on-surface-variant">Configure request payloads (e.g., JSON schemas, required fields, and data types) for mutating HTTP operations.</p>
+          </div>
+
+          <div class="flex flex-col gap-3">
+            <div class="p-4 bg-surface-container-low border border-outline-variant rounded-lg flex flex-col gap-2">
+              <div class="flex items-center justify-between text-xs font-bold text-on-surface uppercase">
+                <span>Payload Content-Type</span>
+                <span class="px-2 py-0.5 bg-primary/10 text-primary font-code-md text-xs font-semibold rounded">application/json</span>
+              </div>
+              <p class="text-xs text-on-surface-variant">JSON Schema contracts ensure missing required fields and type mismatches in incoming requests trigger drift alerts.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 7: Responses -->
+        <div id="step-pane-7" class="step-panel widget-card flex flex-col gap-6 hidden">
+          <div class="border-b border-outline-variant pb-4">
+            <div class="flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider mb-1">
+              <span class="material-symbols-outlined text-sm">reply</span> Step 7 of 8
+            </div>
+            <h2 class="text-headline-md font-headline-md text-on-surface font-bold">Responses & Status Codes</h2>
+            <p class="text-body-md text-on-surface-variant">Define expected HTTP response status codes (200, 201, 400, 404, 500) and response schema bodies.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="p-3 border border-emerald-500/30 bg-emerald-500/5 rounded-lg flex flex-col gap-1">
+              <span class="text-xs font-bold text-emerald-700 font-code-md">200 OK / 201 Created</span>
+              <span class="text-[11px] text-on-surface-variant">Success response schema and items</span>
+            </div>
+            <div class="p-3 border border-amber-500/30 bg-amber-500/5 rounded-lg flex flex-col gap-1">
+              <span class="text-xs font-bold text-amber-700 font-code-md">400 Bad Request / 422</span>
+              <span class="text-[11px] text-on-surface-variant">Client validation error schema</span>
+            </div>
+            <div class="p-3 border border-error/30 bg-error/5 rounded-lg flex flex-col gap-1">
+              <span class="text-xs font-bold text-error font-code-md">404 Not Found / 500</span>
+              <span class="text-[11px] text-on-surface-variant">Error response format</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 8: Review & Generate -->
+        <div id="step-pane-8" class="step-panel widget-card flex flex-col gap-6 hidden">
+          <div class="border-b border-outline-variant pb-4">
+            <div class="flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider mb-1">
+              <span class="material-symbols-outlined text-sm">task_alt</span> Step 8 of 8
+            </div>
+            <h2 class="text-headline-md font-headline-md text-on-surface font-bold">Review & Generate Specification</h2>
+            <p class="text-body-md text-on-surface-variant">Review the generated OpenAPI 3.0 YAML specification document, validate schema syntax, and save it as the active contract.</p>
+          </div>
+
+          <!-- Summary Cards & Metrics -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div class="p-3 bg-surface-container-low border border-outline-variant rounded-lg">
+              <div class="text-[11px] font-medium text-on-surface-variant uppercase">API Title</div>
+              <div id="summary-title" class="font-bold text-sm text-on-surface truncate">{{ summary.title if summary else 'N/A' }}</div>
+            </div>
+            <div class="p-3 bg-surface-container-low border border-outline-variant rounded-lg">
+              <div class="text-[11px] font-medium text-on-surface-variant uppercase">Version</div>
+              <div id="summary-version" class="font-bold text-sm font-code-md text-on-surface">{{ summary.version if summary else '1.0.0' }}</div>
+            </div>
+            <div class="p-3 bg-surface-container-low border border-outline-variant rounded-lg">
+              <div class="text-[11px] font-medium text-on-surface-variant uppercase">Standard</div>
+              <div id="summary-openapi" class="font-bold text-sm font-code-md text-primary">{{ summary.openapi_version if summary else '3.0.3' }}</div>
+            </div>
+            <div class="p-3 bg-surface-container-low border border-outline-variant rounded-lg">
+              <div class="text-[11px] font-medium text-on-surface-variant uppercase">Paths Count</div>
+              <div id="summary-paths" class="font-bold text-sm font-code-md text-primary">{{ summary.paths_count if summary else 0 }}</div>
+            </div>
+          </div>
+
+          <!-- Validation Error Box -->
+          <div id="validation-error-box" class="{% if not error %}hidden{% endif %} p-3.5 bg-error/10 border border-error/30 rounded-lg text-xs text-error">
+            <div class="font-bold flex items-center gap-1.5 mb-1">
+              <span class="material-symbols-outlined text-sm">error</span> Specification Validation Error
+            </div>
+            <div id="validation-error-text" class="font-code-md whitespace-pre-wrap">{{ error or '' }}</div>
+          </div>
+
+          <!-- Spec Preview & Editor -->
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span id="line-char-counter" class="text-xs font-code-md text-on-surface-variant">0 lines</span>
+                <span class="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-1">
+                  <span class="material-symbols-outlined text-primary text-sm">code</span>
+                  OpenAPI YAML Document
+                </span>
+                <span id="line-char-counter" class="text-[11px] font-code-md text-on-surface-variant">0 lines</span>
+              </div>
+              <div class="flex items-center gap-1.5">
                 <button id="btn-copy-spec" title="Copy to clipboard" class="px-2.5 py-1 text-xs border border-outline-variant bg-surface-container hover:bg-surface-variant rounded font-semibold flex items-center gap-1 transition-colors cursor-pointer">
                   <span class="material-symbols-outlined text-xs">content_copy</span> Copy
                 </button>
@@ -271,113 +623,43 @@
               </div>
             </div>
 
-            <!-- Textarea Editor -->
-            <div class="relative flex-1">
-              <textarea id="spec-editor" class="editor-textarea w-full h-[450px] p-4 bg-surface-container-lowest border border-outline-variant rounded-md text-body-md font-code-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-y" spellcheck="false" placeholder="Paste or edit OpenAPI YAML or JSON here...">{{ spec_content }}</textarea>
-            </div>
-
-            <!-- Action Controls Bar -->
-            <div class="flex flex-wrap items-center justify-between pt-md mt-md border-t border-outline-variant gap-3">
-              <div class="text-xs text-on-surface-variant flex items-center gap-1">
-                <span class="material-symbols-outlined text-xs">info</span>
-                <span>Saving will update the active specification for runtime drift detection.</span>
-              </div>
-              
-              <div class="flex items-center gap-2">
-                <button id="btn-validate" class="px-4 py-2 border border-primary text-primary hover:bg-primary/5 rounded-md font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer">
-                  <span class="material-symbols-outlined text-sm">fact_check</span> Validate Spec
-                </button>
-                <button id="btn-save" class="px-4 py-2 bg-primary text-on-primary hover:opacity-90 rounded-md font-semibold text-xs flex items-center gap-1.5 transition-opacity cursor-pointer">
-                  <span class="material-symbols-outlined text-sm">save</span> Save Active Spec
-                </button>
-              </div>
-            </div>
+            <textarea id="spec-editor" class="editor-textarea w-full h-[360px] p-3.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-code-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-y" spellcheck="false" placeholder="Generated OpenAPI YAML document will appear here...">{{ spec_content }}</textarea>
           </div>
 
-        </div>
-
-        <!-- Right Column: Validation Summary & Discovered Endpoints (4 cols) -->
-        <div class="lg:col-span-4 flex flex-col gap-lg">
-          
-          <!-- Summary & Metadata Card -->
-          <div class="widget-card">
-            <h2 class="text-headline-sm font-headline-sm text-on-surface mb-md flex items-center gap-2">
-              <span class="material-symbols-outlined text-primary text-xl">analytics</span>
-              Specification Overview
-            </h2>
-
-            <div id="validation-error-box" class="{% if not error %}hidden{% endif %} p-3 mb-md bg-error/10 border border-error/30 rounded-lg text-xs text-error">
-              <div class="font-bold flex items-center gap-1 mb-1">
-                <span class="material-symbols-outlined text-sm">error</span> Parse / Validation Error
-              </div>
-              <div id="validation-error-text" class="font-code-md whitespace-pre-wrap">{{ error or '' }}</div>
-            </div>
-
-            <div class="flex flex-col gap-3">
-              <div class="flex justify-between items-center py-1.5 border-b border-outline-variant text-sm">
-                <span class="text-on-surface-variant font-medium">API Title</span>
-                <span id="summary-title" class="font-semibold text-on-surface text-right truncate max-w-[180px]">{{ summary.title if summary else 'N/A' }}</span>
-              </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-outline-variant text-sm">
-                <span class="text-on-surface-variant font-medium">API Version</span>
-                <span id="summary-version" class="font-code-md font-semibold text-on-surface">{{ summary.version if summary else 'N/A' }}</span>
-              </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-outline-variant text-sm">
-                <span class="text-on-surface-variant font-medium">OpenAPI Standard</span>
-                <span id="summary-openapi" class="font-code-md px-2 py-0.5 bg-surface-container rounded text-xs text-primary font-bold">{{ summary.openapi_version if summary else 'N/A' }}</span>
-              </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-outline-variant text-sm">
-                <span class="text-on-surface-variant font-medium">Total Path Routes</span>
-                <span id="summary-paths" class="font-headline-sm font-bold text-primary">{{ summary.paths_count if summary else 0 }}</span>
-              </div>
-              <div class="flex justify-between items-center py-1.5 text-sm">
-                <span class="text-on-surface-variant font-medium">Component Schemas</span>
-                <span id="summary-schemas" class="font-headline-sm font-bold text-secondary">{{ summary.schemas_count if summary else 0 }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Discovered Endpoints Card -->
-          <div class="widget-card flex flex-col flex-1">
-            <div class="flex items-center justify-between mb-sm">
-              <h2 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary text-xl">api</span>
-                Discovered Endpoints
-              </h2>
-              <span id="endpoints-badge" class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-xs font-bold rounded-full">
-                {{ summary.endpoints | length if summary and summary.endpoints else 0 }}
-              </span>
+          <!-- Action Controls for Step 8 -->
+          <div class="flex flex-wrap items-center justify-between pt-3 border-t border-outline-variant gap-3">
+            <div class="text-xs text-on-surface-variant flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-primary">info</span>
+              <span>Saving updates the active specification used for live runtime contract validation.</span>
             </div>
             
-            <p class="text-xs text-on-surface-variant mb-md">All routes parsed from this specification that API Sentinel monitors for runtime drift.</p>
-
-            <div id="endpoints-list" class="flex flex-col gap-2 max-h-[380px] overflow-y-auto pr-1">
-              {% if summary and summary.endpoints %}
-                {% for ep in summary.endpoints %}
-                <div class="p-2.5 bg-surface-container-low border border-outline-variant rounded-md flex flex-col gap-1.5">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    {% for m in ep.methods %}
-                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-code-md {% if m == 'GET' %}bg-primary text-on-primary{% elif m == 'POST' %}bg-emerald-700 text-white{% elif m == 'PUT' %}bg-amber-600 text-white{% elif m == 'DELETE' %}bg-error text-white{% else %}bg-secondary text-white{% endif %}">
-                      {{ m }}
-                    </span>
-                    {% endfor %}
-                    <span class="font-code-md text-xs font-semibold text-on-surface truncate" title="{{ ep.path }}">{{ ep.path }}</span>
-                  </div>
-                  {% if ep.summary %}
-                  <div class="text-[11px] text-on-surface-variant truncate">{{ ep.summary }}</div>
-                  {% endif %}
-                </div>
-                {% endfor %}
-              {% else %}
-                <div class="p-6 text-center text-xs text-on-surface-variant">
-                  No endpoints parsed. Paste or upload a valid specification to inspect routes.
-                </div>
-              {% endif %}
+            <div class="flex items-center gap-2">
+              <button id="btn-validate" class="px-4 py-2 border border-primary text-primary hover:bg-primary/5 rounded-md font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer">
+                <span class="material-symbols-outlined text-sm">fact_check</span> Validate Spec
+              </button>
+              <button id="btn-save" class="px-4 py-2 bg-primary text-on-primary hover:opacity-90 rounded-md font-semibold text-xs flex items-center gap-1.5 transition-opacity cursor-pointer">
+                <span class="material-symbols-outlined text-sm">save</span> Save Active Spec
+              </button>
             </div>
           </div>
-
         </div>
 
+      </div>
+
+      <!-- WIZARD NAVIGATION BAR (Back / Save & Continue / Next) -->
+      <div class="widget-card bg-surface-container-lowest flex items-center justify-between py-4 px-6 border-t border-outline-variant sticky bottom-4 shadow-lg z-30">
+        <div>
+          <button id="btn-wizard-back" onclick="navigateWizard(-1)" class="px-4 py-2 border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-variant rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="btn-wizard-save-continue" onclick="navigateWizard(1)" class="px-5 py-2 bg-primary text-on-primary hover:opacity-90 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm">
+            <span id="btn-continue-text">Save & Continue</span>
+            <span id="btn-continue-icon" class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
       </div>
 
     </div>
@@ -385,52 +667,147 @@
 </div>
 
 <script>
+  let currentStep = 1;
+  const TOTAL_STEPS = 8;
+  const stepTitles = [
+    "API Information",
+    "Servers / Base URL",
+    "Endpoints",
+    "Endpoint Details",
+    "Request Parameters",
+    "Request Body",
+    "Responses",
+    "Review & Generate"
+  ];
+
   const editor = document.getElementById("spec-editor");
-  const dropZone = document.getElementById("drop-zone");
-  const fileInput = document.getElementById("file-input");
   const btnValidate = document.getElementById("btn-validate");
   const btnSave = document.getElementById("btn-save");
   const btnCopy = document.getElementById("btn-copy-spec");
   const btnLoadActive = document.getElementById("btn-load-active");
   const lineCharCounter = document.getElementById("line-char-counter");
+  const btnBack = document.getElementById("btn-wizard-back");
+  const btnContinue = document.getElementById("btn-wizard-save-continue");
+  const btnContinueText = document.getElementById("btn-continue-text");
+  const btnContinueIcon = document.getElementById("btn-continue-icon");
+  const progressBadge = document.getElementById("current-step-badge");
+  const stepTitleHeader = document.getElementById("current-step-title");
+  const progressBar = document.getElementById("wizard-progress-bar");
+  const progressPercentage = document.getElementById("progress-percentage");
+  const navStepCount = document.getElementById("nav-step-count");
 
-  // Update line counter
+  // Step Navigation Controller
+  function goToStep(step) {
+    if (step < 1 || step > TOTAL_STEPS) return;
+
+    // Hide current step panel
+    const currentPane = document.getElementById(`step-pane-${currentStep}`);
+    if (currentPane) currentPane.classList.add("hidden");
+
+    currentStep = step;
+
+    // Show target step panel
+    const targetPane = document.getElementById(`step-pane-${currentStep}`);
+    if (targetPane) targetPane.classList.remove("hidden");
+
+    // Update Progress Indicator
+    const percent = Math.round((currentStep / TOTAL_STEPS) * 100);
+    progressBar.style.width = `${(currentStep / TOTAL_STEPS) * 100}%`;
+    progressPercentage.textContent = `${percent}%`;
+    progressBadge.textContent = `Step ${currentStep} of ${TOTAL_STEPS}`;
+    stepTitleHeader.textContent = stepTitles[currentStep - 1];
+    if (navStepCount) navStepCount.textContent = `Step ${currentStep} of ${TOTAL_STEPS}`;
+
+    // Update Step Pills Styling
+    for (let i = 1; i <= TOTAL_STEPS; i++) {
+      const pill = document.getElementById(`step-btn-${i}`);
+      const sideItem = document.getElementById(`side-step-${i}`);
+
+      if (pill) {
+        pill.classList.remove("step-pill-active", "step-pill-completed", "step-pill-upcoming");
+        const badge = pill.querySelector("span:first-child");
+
+        if (i === currentStep) {
+          pill.classList.add("step-pill-active");
+          if (badge) { badge.className = "w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-white text-primary"; }
+        } else if (i < currentStep) {
+          pill.classList.add("step-pill-completed");
+          if (badge) { badge.className = "w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-primary text-white"; }
+        } else {
+          pill.classList.add("step-pill-upcoming");
+          if (badge) { badge.className = "w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-surface-container text-on-surface"; }
+        }
+      }
+
+      if (sideItem) {
+        sideItem.classList.remove("bg-primary/10", "text-primary", "font-semibold", "bg-emerald-500/10", "text-emerald-700");
+        const sideBadge = sideItem.querySelector("span:first-child");
+        if (i === currentStep) {
+          sideItem.classList.add("bg-primary/10", "text-primary", "font-semibold");
+          if (sideBadge) sideBadge.className = "w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-primary text-white font-bold";
+        } else if (i < currentStep) {
+          if (sideBadge) sideBadge.className = "w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-emerald-700 text-white font-bold";
+        } else {
+          if (sideBadge) sideBadge.className = "w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-outline-variant text-on-surface font-bold";
+        }
+      }
+    }
+
+    // Navigation buttons state
+    btnBack.disabled = (currentStep === 1);
+
+    if (currentStep === TOTAL_STEPS) {
+      btnContinueText.textContent = "Finish & Validate";
+      btnContinueIcon.textContent = "fact_check";
+      updateLineCounter();
+    } else {
+      btnContinueText.textContent = "Save & Continue";
+      btnContinueIcon.textContent = "arrow_forward";
+    }
+
+    // Scroll container to top
+    const mainEl = document.querySelector("main");
+    if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function navigateWizard(direction) {
+    if (direction === 1 && currentStep === TOTAL_STEPS) {
+      validateSpec();
+      return;
+    }
+    goToStep(currentStep + direction);
+  }
+
+  // Update line counter in editor
   function updateLineCounter() {
+    if (!editor) return;
     const text = editor.value;
     const lines = text ? text.split("\n").length : 0;
     const chars = text ? text.length : 0;
-    lineCharCounter.textContent = `${lines} lines • ${chars} chars`;
+    if (lineCharCounter) lineCharCounter.textContent = `${lines} lines • ${chars} chars`;
   }
-  editor.addEventListener("input", updateLineCounter);
-  updateLineCounter();
-
-  // Tab key support in textarea
-  editor.addEventListener("keydown", function(e) {
-    if (e.key === "Tab") {
-      e.preventDefault();
-      const start = this.selectionStart;
-      const end = this.selectionEnd;
-      this.value = this.value.substring(0, start) + "  " + this.value.substring(end);
-      this.selectionStart = this.selectionEnd = start + 2;
-      updateLineCounter();
-    }
-  });
+  if (editor) {
+    editor.addEventListener("input", updateLineCounter);
+    updateLineCounter();
+  }
 
   // Toast notifications
   function showToast(message, isError = false) {
     const toast = document.getElementById("toast-message");
     const icon = document.getElementById("toast-icon");
     const text = document.getElementById("toast-text");
+    if (!toast) return;
     toast.className = isError 
-      ? "mb-md p-3 rounded-lg border text-sm flex items-center justify-between bg-error/10 border-error/30 text-error"
-      : "mb-md p-3 rounded-lg border text-sm flex items-center justify-between bg-emerald-500/10 border-emerald-500/30 text-emerald-800";
-    icon.textContent = isError ? "error" : "check_circle";
-    text.textContent = message;
+      ? "p-3.5 rounded-lg border text-sm flex items-center justify-between shadow-sm bg-error/10 border-error/30 text-error"
+      : "p-3.5 rounded-lg border text-sm flex items-center justify-between shadow-sm bg-emerald-500/10 border-emerald-500/30 text-emerald-800";
+    if (icon) icon.textContent = isError ? "error" : "check_circle";
+    if (text) text.textContent = message;
     toast.classList.remove("hidden");
   }
 
   function hideToast() {
-    document.getElementById("toast-message").classList.add("hidden");
+    const toast = document.getElementById("toast-message");
+    if (toast) toast.classList.add("hidden");
   }
 
   // Update UI with validation results
@@ -443,62 +820,34 @@
     const sumVersion = document.getElementById("summary-version");
     const sumOpenapi = document.getElementById("summary-openapi");
     const sumPaths = document.getElementById("summary-paths");
-    const sumSchemas = document.getElementById("summary-schemas");
-    const endpointsList = document.getElementById("endpoints-list");
-    const endpointsBadge = document.getElementById("endpoints-badge");
 
     if (data.valid && data.summary) {
-      statusPill.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/30";
-      statusPill.querySelector(".material-symbols-outlined").textContent = "check_circle";
-      statusText.textContent = "VALID SPECIFICATION";
-      errorBox.classList.add("hidden");
+      if (statusPill) {
+        statusPill.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/30";
+        statusPill.querySelector(".material-symbols-outlined").textContent = "check_circle";
+      }
+      if (statusText) statusText.textContent = "ACTIVE SPEC VALID";
+      if (errorBox) errorBox.classList.add("hidden");
 
       const s = data.summary;
-      sumTitle.textContent = s.title || "Untitled API";
-      sumVersion.textContent = s.version || "1.0.0";
-      sumOpenapi.textContent = s.openapi_version || "3.x";
-      sumPaths.textContent = s.paths_count || 0;
-      sumSchemas.textContent = s.schemas_count || 0;
-
-      const endpoints = s.endpoints || [];
-      endpointsBadge.textContent = endpoints.length;
-
-      if (endpoints.length > 0) {
-        endpointsList.innerHTML = endpoints.map(ep => {
-          const methodPills = (ep.methods || []).map(m => {
-            let color = "bg-secondary text-white";
-            if (m === "GET") color = "bg-primary text-on-primary";
-            if (m === "POST") color = "bg-emerald-700 text-white";
-            if (m === "PUT") color = "bg-amber-600 text-white";
-            if (m === "DELETE") color = "bg-error text-white";
-            return `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-code-md ${color}">${m}</span>`;
-          }).join(" ");
-          
-          return `
-            <div class="p-2.5 bg-surface-container-low border border-outline-variant rounded-md flex flex-col gap-1.5">
-              <div class="flex items-center gap-1.5 flex-wrap">
-                ${methodPills}
-                <span class="font-code-md text-xs font-semibold text-on-surface truncate" title="${ep.path}">${ep.path}</span>
-              </div>
-              ${ep.summary ? `<div class="text-[11px] text-on-surface-variant truncate">${ep.summary}</div>` : ''}
-            </div>
-          `;
-        }).join("");
-      } else {
-        endpointsList.innerHTML = `<div class="p-6 text-center text-xs text-on-surface-variant">No paths defined in this specification.</div>`;
-      }
+      if (sumTitle) sumTitle.textContent = s.title || "Untitled API";
+      if (sumVersion) sumVersion.textContent = s.version || "1.0.0";
+      if (sumOpenapi) sumOpenapi.textContent = s.openapi_version || "3.x";
+      if (sumPaths) sumPaths.textContent = s.paths_count || 0;
     } else {
-      statusPill.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-error/10 text-error border border-error/30";
-      statusPill.querySelector(".material-symbols-outlined").textContent = "error";
-      statusText.textContent = "VALIDATION ERROR";
-      
-      errorText.textContent = data.error || "Unknown validation error";
-      errorBox.classList.remove("hidden");
+      if (statusPill) {
+        statusPill.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-error/10 text-error border border-error/30";
+        statusPill.querySelector(".material-symbols-outlined").textContent = "error";
+      }
+      if (statusText) statusText.textContent = "SPEC ERROR";
+      if (errorText) errorText.textContent = data.error || "Unknown validation error";
+      if (errorBox) errorBox.classList.remove("hidden");
     }
   }
 
   // Validate Action
   async function validateSpec() {
+    if (!editor) return false;
     const content = editor.value;
     try {
       const resp = await fetch("/api/openapi/validate", {
@@ -519,103 +868,65 @@
       return false;
     }
   }
-  btnValidate.addEventListener("click", validateSpec);
+  if (btnValidate) btnValidate.addEventListener("click", validateSpec);
 
   // Save Action
-  btnSave.addEventListener("click", async function() {
-    const content = editor.value;
-    try {
-      const resp = await fetch("/api/openapi/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: content })
-      });
-      const data = await resp.json();
-      if (resp.ok && data.status === "saved") {
-        applyValidationResult({ valid: true, summary: data.summary });
-        showToast(data.message || "Active OpenAPI specification saved successfully!");
-      } else {
-        showToast(data.message || "Failed to save specification.", true);
-        if (data.error) {
-          applyValidationResult({ valid: false, error: data.error });
+  if (btnSave) {
+    btnSave.addEventListener("click", async function() {
+      if (!editor) return;
+      const content = editor.value;
+      try {
+        const resp = await fetch("/api/openapi/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: content })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.status === "saved") {
+          applyValidationResult({ valid: true, summary: data.summary });
+          showToast(data.message || "Active OpenAPI specification saved successfully!");
+        } else {
+          showToast(data.message || "Failed to save specification.", true);
+          if (data.error) {
+            applyValidationResult({ valid: false, error: data.error });
+          }
         }
+      } catch (err) {
+        showToast("Network error while saving: " + err.message, true);
       }
-    } catch (err) {
-      showToast("Network error while saving: " + err.message, true);
-    }
-  });
+    });
+  }
 
   // Load Active Spec
-  async function loadActiveSpec() {
-    try {
-      const resp = await fetch("/api/openapi/current");
-      const data = await resp.json();
-      if (resp.ok && data.content) {
-        editor.value = data.content;
-        updateLineCounter();
-        applyValidationResult(data);
-        showToast("Active specification loaded from disk.");
-      } else {
-        showToast("Could not load active specification.", true);
+  if (btnLoadActive) {
+    btnLoadActive.addEventListener("click", async function() {
+      try {
+        const resp = await fetch("/api/openapi/current");
+        const data = await resp.json();
+        if (resp.ok && data.content) {
+          if (editor) editor.value = data.content;
+          updateLineCounter();
+          applyValidationResult(data);
+          showToast("Active specification reloaded from disk.");
+        } else {
+          showToast("Could not load active specification.", true);
+        }
+      } catch (err) {
+        showToast("Error loading active spec: " + err.message, true);
       }
-    } catch (err) {
-      showToast("Error loading active spec: " + err.message, true);
-    }
+    });
   }
-  btnLoadActive.addEventListener("click", loadActiveSpec);
 
   // Copy Spec
-  btnCopy.addEventListener("click", function() {
-    navigator.clipboard.writeText(editor.value).then(() => {
-      showToast("Specification copied to clipboard!");
-    }).catch(() => {
-      showToast("Failed to copy to clipboard.", true);
+  if (btnCopy) {
+    btnCopy.addEventListener("click", function() {
+      if (!editor) return;
+      navigator.clipboard.writeText(editor.value).then(() => {
+        showToast("Specification copied to clipboard!");
+      }).catch(() => {
+        showToast("Failed to copy to clipboard.", true);
+      });
     });
-  });
-
-  // File Upload Handlers (Click + Drag & Drop)
-  dropZone.addEventListener("click", () => fileInput.click());
-
-  dropZone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropZone.classList.add("dragover");
-  });
-
-  dropZone.addEventListener("dragleave", () => {
-    dropZone.classList.remove("dragover");
-  });
-
-  dropZone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dropZone.classList.remove("dragover");
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFile(e.dataTransfer.files[0]);
-    }
-  });
-
-  fileInput.addEventListener("change", (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFile(e.target.files[0]);
-    }
-  });
-
-  function handleFile(file) {
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      editor.value = evt.target.result;
-      updateLineCounter();
-      
-      const fnameBox = document.getElementById("uploaded-filename");
-      const fnameText = document.getElementById("uploaded-filename-text");
-      fnameText.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-      fnameBox.classList.remove("hidden");
-      
-      validateSpec();
-    };
-    reader.onerror = function() {
-      showToast("Failed to read the uploaded file.", true);
-    };
-    reader.readAsText(file);
   }
 </script>
 
