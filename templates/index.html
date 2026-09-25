@@ -263,27 +263,37 @@
               <span class="flex items-center gap-1 text-xs text-tertiary"><span class="w-2 h-2 rounded-full bg-tertiary inline-block"></span> Warn</span>
             </div>
           </div>
-          <div class="flex-1 bg-surface-container-low rounded border border-outline-variant/50 flex items-end px-2 py-4 gap-1 min-h-[180px]">
-            <div class="w-full flex items-end justify-between h-full gap-1" id="timeline-bars">
-              <!-- dynamically rendered by dashboard.js -->
-              <div class="w-full bg-secondary/80 rounded-t-sm h-[80%] hover:bg-secondary transition-colors relative group"><div class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-surface text-on-surface border border-outline-variant shadow-md text-xs py-1 px-2 rounded z-10 whitespace-nowrap">100%</div></div>
-              <div class="w-full bg-secondary/80 rounded-t-sm h-[85%] hover:bg-secondary transition-colors"></div>
-              <div class="w-full bg-secondary/80 rounded-t-sm h-[90%] hover:bg-secondary transition-colors"></div>
-              <div class="w-full bg-error/80 rounded-t-sm h-[40%] hover:bg-error transition-colors relative group"><div class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-surface text-error border border-error shadow-md text-xs py-1 px-2 rounded z-10 whitespace-nowrap">60%</div></div>
-              <div class="w-full bg-secondary/80 rounded-t-sm h-[95%] hover:bg-secondary transition-colors"></div>
-              <div class="w-full bg-secondary/80 rounded-t-sm h-[92%] hover:bg-secondary transition-colors"></div>
-              <div class="w-full bg-secondary/80 rounded-t-sm h-[88%] hover:bg-secondary transition-colors"></div>
-              <div class="w-full bg-tertiary/80 rounded-t-sm h-[70%] hover:bg-tertiary transition-colors"></div>
-              <div class="w-full bg-secondary/80 rounded-t-sm h-[96%] hover:bg-secondary transition-colors"></div>
-              <div class="w-full bg-secondary/80 rounded-t-sm h-[99%] hover:bg-secondary transition-colors"></div>
-              <div class="w-full bg-error/80 rounded-t-sm h-[30%] hover:bg-error transition-colors"></div>
-              <div class="w-full bg-secondary/80 rounded-t-sm h-[94%] hover:bg-secondary transition-colors"></div>
+          <div class="flex-1 bg-surface-container-low rounded border border-outline-variant/50 flex items-end px-3 py-4 gap-1.5 min-h-[180px]">
+            <div class="w-full flex items-end justify-between h-full gap-1.5" id="timeline-bars">
+              {% set tl = report.timeline %}
+              {% for bar in tl.bars %}
+                {% if bar.status == 'PASSED' %}
+                  {% set color_cls = 'bg-secondary/80 hover:bg-secondary' %}
+                  {% set text_cls = 'text-secondary' %}
+                {% elif bar.status == 'WARNING' %}
+                  {% set color_cls = 'bg-tertiary/80 hover:bg-tertiary' %}
+                  {% set text_cls = 'text-tertiary' %}
+                {% elif bar.status == 'FAILED' %}
+                  {% set color_cls = 'bg-error/80 hover:bg-error' %}
+                  {% set text_cls = 'text-error' %}
+                {% else %}
+                  {% set color_cls = 'bg-outline-variant/20 hover:bg-outline-variant/40' %}
+                  {% set text_cls = 'text-on-surface-variant' %}
+                {% endif %}
+                <div class="w-full h-full flex flex-col justify-end items-center relative group cursor-pointer" data-bar-index="{{ loop.index0 }}">
+                  <div class="hidden group-hover:flex absolute -top-10 left-1/2 -translate-x-1/2 bg-surface text-on-surface border border-outline-variant shadow-lg text-xs py-1 px-2.5 rounded z-30 whitespace-nowrap pointer-events-none flex-col items-center">
+                    <span class="font-bold {{ text_cls }}">{{ bar.label }}</span>
+                    <span class="text-[10px] text-on-surface-variant font-code-md">{{ bar.tooltip }}</span>
+                  </div>
+                  <div class="w-full {{ color_cls }} rounded-t-sm transition-all duration-300" style="height: {{ bar.height_pct }}%;"></div>
+                </div>
+              {% endfor %}
             </div>
           </div>
-          <div class="flex justify-between mt-2 text-xs text-on-surface-variant font-code-md">
-            <span>-24h</span>
-            <span>-12h</span>
-            <span>Now</span>
+          <div class="flex justify-between mt-2 text-xs text-on-surface-variant font-code-md" id="timeline-labels">
+            <span id="timeline-label-start">{{ report.timeline.start_label }}</span>
+            <span id="timeline-label-mid">{{ report.timeline.mid_label }}</span>
+            <span id="timeline-label-end">{{ report.timeline.end_label }}</span>
           </div>
         </div>
 

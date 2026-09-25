@@ -293,6 +293,186 @@ class AggregateReport:
     def add_result(self, result: EndpointValidationResult) -> None:
         self.results.append(result)
 
+    @property
+    def timeline(self) -> Dict[str, Any]:
+        """Calculates a 12-bar validation pass/fail timeline from the recorded results."""
+        return self.compute_timeline(num_bars=12)
+
+    def compute_timeline(self, num_bars: int = 12) -> Dict[str, Any]:
+        """
+        Computes timeline buckets for the Pass/Fail Rate chart.
+        Returns a dictionary with 'bars', 'start_label', 'mid_label', and 'end_label'.
+        """
+        if not self.results:
+            bars = [
+                {
+                    "height_pct": 6,
+                    "status": "EMPTY",
+                    "pass_rate": 0,
+                    "total": 0,
+                    "passed": 0,
+                    "warning": 0,
+                    "failed": 0,
+                    "label": "—",
+                    "tooltip": "No validation telemetry recorded yet",
+                    "timestamp_label": "",
+                }
+                for _ in range(num_bars)
+            ]
+            return {
+                "bars": bars,
+                "start_label": "-24h",
+                "mid_label": "-12h",
+                "end_label": "Now",
+            }
+
+        # self.results are stored newest-first. Reverse to chronological order (oldest first).
+        results_asc = list(reversed(self.results))
+        total_items = len(results_asc)
+
+        def _fmt_ts(iso_str: str) -> str:
+            if not iso_str:
+                return ""
+            try:
+                dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+                return dt.strftime("%H:%M:%S")
+            except Exception:
+                return str(iso_str)[11:19] if len(str(iso_str)) >= 19 else str(iso_str)
+
+        start_label = _fmt_ts(results_asc[0].timestamp) or "-24h"
+        mid_label = _fmt_ts(results_asc[len(results_asc) // 2].timestamp) or "-12h"
+        end_label = "Now"
+
+        bars = []
+        if total_items <= num_bars:
+            # Map each item directly to an individual bar slot
+            for r in results_asc:
+                status_str = r.validation_status.value if isinstance(r.validation_status, Enum) else str(r.validation_status)
+                status_str = status_str.upper()
+                ts_str = _fmt_ts(r.timestamp)
+
+                if status_str == "PASSED":
+                    bars.append({
+                        "height_pct": 100,
+                        "status": "PASSED",
+                        "pass_rate": 100,
+                        "total": 1,
+                        "passed": 1,
+                        "warning": 0,
+                        "failed": 0,
+                        "label": "100%",
+                        "tooltip": f"{r.method} {r.endpoint} • PASSED ({r.status_code})",
+                        "timestamp_label": ts_str,
+                    })
+                elif status_str == "WARNING":
+                    bars.append({
+                        "height_pct": 70,
+                        "status": "WARNING",
+                        "pass_rate": 70,
+                        "total": 1,
+                        "passed": 0,
+                        "warning": 1,
+                        "failed": 0,
+                        "label": "Warn",
+                        "tooltip": f"{r.method} {r.endpoint} • WARNING ({r.status_code})",
+                        "timestamp_label": ts_str,
+                    })
+                else:
+                    bars.append({
+                        "height_pct": 40,
+                        "status": "FAILED",
+                        "pass_rate": 30,
+                        "total": 1,
+                        "passed": 0,
+                        "warning": 0,
+                        "failed": 1,
+                        "label": "Fail",
+                        "tooltip": f"{r.method} {r.endpoint} • FAILED ({r.status_code})",
+                        "timestamp_label": ts_str,
+                    })
+
+            # Fill remaining slots with EMPTY bars
+            for _ in range(num_bars - total_items):
+                bars.append({
+                    "height_pct": 6,
+                    "status": "EMPTY",
+                    "pass_rate": 0,
+                    "total": 0,
+                    "passed": 0,
+                    "warning": 0,
+                    "failed": 0,
+                    "label": "—",
+                    "tooltip": "Awaiting validation telemetry...",
+                    "timestamp_label": "",
+                })
+        else:
+            # Partition chronological results into num_bars buckets
+            for i in range(num_bars):
+                start_idx = (i * total_items) // num_bars
+                end_idx = ((i + 1) * total_items) // num_bars
+                bucket = results_asc[start_idx:end_idx]
+
+                if not bucket:
+                    bars.append({
+                        "height_pct": 6,
+                        "status": "EMPTY",
+                        "pass_rate": 0,
+                        "total": 0,
+                        "passed": 0,
+                        "warning": 0,
+                        "failed": 0,
+                        "label": "—",
+                        "tooltip": "No validation data in this interval",
+                        "timestamp_label": "",
+                    })
+                    continue
+
+                b_total = len(bucket)
+                b_passed = sum(1 for x in bucket if (x.validation_status.value if isinstance(x.validation_status, Enum) else str(x.validation_status)).upper() == "PASSED")
+                b_warn = sum(1 for x in bucket if (x.validation_status.value if isinstance(x.validation_status, Enum) else str(x.validation_status)).upper() == "WARNING")
+                b_failed = sum(1 for x in bucket if (x.validation_status.value if isinstance(x.validation_status, Enum) else str(x.validation_status)).upper() == "FAILED")
+                pass_rate = round((b_passed / b_total) * 100) if b_total > 0 else 0
+
+                b_start_ts = _fmt_ts(bucket[0].timestamp)
+                b_end_ts = _fmt_ts(bucket[-1].timestamp)
+                time_range_str = f"{b_start_ts} - {b_end_ts}" if b_start_ts != b_end_ts else b_start_ts
+
+                if b_failed > 0:
+                    status = "FAILED"
+                    height = max(pass_rate, 25)
+                    label = f"{pass_rate}%"
+                    tooltip = f"Pass Rate: {pass_rate}% ({b_passed}/{b_total} passed, {b_failed} failed) • {time_range_str}"
+                elif b_warn > 0:
+                    status = "WARNING"
+                    height = max(pass_rate, 50)
+                    label = f"{pass_rate}%"
+                    tooltip = f"Pass Rate: {pass_rate}% ({b_passed}/{b_total} passed, {b_warn} warnings) • {time_range_str}"
+                else:
+                    status = "PASSED"
+                    height = 100
+                    label = "100%"
+                    tooltip = f"100% Passed ({b_passed}/{b_total} passed) • {time_range_str}"
+
+                bars.append({
+                    "height_pct": height,
+                    "status": status,
+                    "pass_rate": pass_rate,
+                    "total": b_total,
+                    "passed": b_passed,
+                    "warning": b_warn,
+                    "failed": b_failed,
+                    "label": label,
+                    "tooltip": tooltip,
+                    "timestamp_label": time_range_str,
+                })
+
+        return {
+            "bars": bars,
+            "start_label": start_label,
+            "mid_label": mid_label,
+            "end_label": end_label,
+        }
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "title": self.title,
@@ -303,6 +483,7 @@ class AggregateReport:
                 "warning_count": self.warning_count,
                 "failed_endpoints": self.failed_endpoints,
             },
+            "timeline": self.timeline,
             "results": [r.to_dict() for r in self.results],
         }
 

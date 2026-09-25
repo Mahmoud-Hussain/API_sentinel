@@ -7,6 +7,7 @@ Offloads runtime data capture and validation to background tasks using asyncio.c
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 import logging
 from typing import Callable, Optional, Sequence
 
@@ -251,6 +252,7 @@ class APISentinelMiddleware(BaseHTTPMiddleware):
                 "status_code": data.status_code,
                 "validation_status": status.value,
                 "severity": sev.value if sev else "NONE",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "expected_schema": expected_schema,
                 "actual_schema": masked_actual_schema,
                 "differences": raw_diffs,
