@@ -20,6 +20,7 @@ from api_sentinel.validation_report import (
 )
 from api_sentinel.diff_engine import DriftSeverity, DriftType
 from api_sentinel.openapi_parser import OpenAPIParser
+from api_sentinel.openapi_generator import generate_openapi_yaml, generate_openapi_spec
 from html_report import generate_html_report, export_json_report
 
 from sqlalchemy import select, delete
@@ -357,6 +358,34 @@ async def get_current_openapi_spec():
         "summary": summary,
         "error": error,
     }
+
+
+@app.post("/api/openapi/generate")
+async def generate_openapi_from_form(payload: Dict[str, Any]):
+    """
+    Generates a standard OpenAPI 3.0.3 YAML document from structured form inputs
+    and validates it using the existing validate_openapi_content function.
+    """
+    try:
+        yaml_content = generate_openapi_yaml(payload)
+        is_valid, summary, error = validate_openapi_content(yaml_content)
+        return {
+            "status": "success" if is_valid else "invalid",
+            "yaml": yaml_content,
+            "valid": is_valid,
+            "summary": summary,
+            "error": error,
+        }
+    except Exception as exc:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "status": "error",
+                "valid": False,
+                "message": f"Failed to generate OpenAPI specification: {str(exc)}",
+                "error": str(exc),
+            },
+        )
 
 
 @app.post("/api/openapi/validate")
