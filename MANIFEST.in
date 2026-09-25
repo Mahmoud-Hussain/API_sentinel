@@ -1,0 +1,8 @@
+include README.md
+include LICENSE
+include openapi.yaml
+include pyproject.toml
+recursive-include api_sentinel/templates *
+recursive-include api_sentinel/static *
+recursive-include templates *
+recursive-include static *
