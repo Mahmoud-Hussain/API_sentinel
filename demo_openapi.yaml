@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: User Management Demo API
+  version: 1.0.0
+  description: >-
+    Sample OpenAPI 3.0 specification for testing document upload, editing,
+    and validation in the API Sentinel OpenAPI Documentation Portal.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local Demo API Server
+
+paths:
+  /api/v1/users:
+    get:
+      summary: List all users
+      description: Returns a list of all registered users in the system.
+      responses:
+        '200':
+          description: A JSON array of user objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      summary: Create a new user
+      description: Adds a new user record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid user data supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/{id}:
+    get:
+      summary: Get user by ID
+      description: Returns detailed profile for a single user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The numeric ID of the user
+          schema:
+            type: integer
+            example: 42
+      responses:
+        '200':
+          description: User details found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete user by ID
+      description: Removes an existing user from the database.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The numeric ID of the user to delete
+          schema:
+            type: integer
+            example: 42
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - success
+                properties:
+                  message:
+                    type: string
+                    example: User 42 was deleted
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Alice Wonderland
+        email:
+          type: string
+          example: alice@example.com
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+            - guest
+          example: admin
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-09-19T06:00:00Z'
+
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+          example: Bob Builder
+        email:
+          type: string
+          example: bob@example.com
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+            - guest
+          default: user
+          example: user
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          example: User not found
+        error_code:
+          type: string
+          example: NOT_FOUND

@@ -5,8 +5,9 @@ FastAPI web application for visualizing ValidationReport objects, endpoint statu
 
 import json
 import os
+import yaml
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Tuple, Dict, Any, List
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +19,7 @@ from api_sentinel.validation_report import (
     ValidationStatus,
 )
 from api_sentinel.diff_engine import DriftSeverity, DriftType
+from api_sentinel.openapi_parser import OpenAPIParser
 from html_report import generate_html_report, export_json_report
 
 from sqlalchemy import select, delete
@@ -212,3 +214,194 @@ async def export_html():
         media_type="text/html",
         headers={"Content-Disposition": 'attachment; filename="validation_report.html"'},
     )
+
+
+# ===========================================================================
+# OpenAPI Documentation Management Helpers & Endpoints
+# ===========================================================================
+
+def get_active_spec_path() -> str:
+    """Returns the absolute path to the active OpenAPI specification file."""
+    path = getattr(settings, "openapi_spec_path", "openapi.yaml")
+    if os.path.isabs(path):
+        return path
+    return os.path.join(BASE_DIR, path)
+
+
+def validate_openapi_content(content_str: str) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Validates an OpenAPI YAML or JSON specification string.
+    Reuses the existing OpenAPIParser without duplicate validation engines.
+
+    Returns
+    -------
+    tuple[bool, dict | None, str | None]
+        (is_valid, summary_dict, error_message)
+    """
+    if not content_str or not content_str.strip():
+        return False, None, "OpenAPI specification content cannot be empty."
+
+    # Parse YAML or JSON (yaml.safe_load parses both YAML and JSON)
+    try:
+        data = yaml.safe_load(content_str)
+    except Exception as exc:
+        return False, None, f"Invalid YAML/JSON syntax: {str(exc)}"
+
+    if not isinstance(data, dict):
+        return False, None, "OpenAPI specification must be a valid JSON/YAML object/dictionary."
+
+    # Validate version field (OpenAPI 3.x or Swagger 2.0)
+    version_str = data.get("openapi") or data.get("swagger")
+    if not version_str:
+        return False, None, "Missing required OpenAPI version field ('openapi' or 'swagger')."
+
+    # Validate info object
+    info = data.get("info")
+    if not isinstance(info, dict):
+        return False, None, "Missing or invalid 'info' section in OpenAPI specification."
+
+    title = str(info.get("title", "Untitled API"))
+    api_version = str(info.get("version", "1.0.0"))
+
+    # Validate paths object
+    paths = data.get("paths")
+    if not isinstance(paths, dict):
+        return False, None, "Missing or invalid 'paths' section in OpenAPI specification."
+
+    # Reuse OpenAPIParser to parse routes, parameters, and schema structures
+    try:
+        parser = OpenAPIParser.from_dict(data)
+        
+        endpoints_summary: List[Dict[str, Any]] = []
+        for path_template, path_item in parser.paths.items():
+            if isinstance(path_item, dict):
+                methods = [
+                    m.upper()
+                    for m in path_item.keys()
+                    if m.lower() in {"get", "post", "put", "delete", "patch", "head", "options", "trace"}
+                ]
+                endpoints_summary.append({
+                    "path": path_template,
+                    "methods": methods,
+                    "summary": path_item.get("summary", ""),
+                })
+
+        summary = {
+            "title": title,
+            "version": api_version,
+            "openapi_version": str(version_str),
+            "description": info.get("description", ""),
+            "paths_count": len(paths),
+            "endpoints": endpoints_summary,
+            "schemas_count": len(parser.components_schemas),
+        }
+        return True, summary, None
+    except Exception as exc:
+        return False, None, f"OpenAPI schema structure error: {str(exc)}"
+
+
+@app.get("/openapi-docs", response_class=HTMLResponse)
+async def openapi_docs_page(request: Request):
+    """Renders the OpenAPI Documentation & Specification Management page."""
+    spec_path = get_active_spec_path()
+    content = ""
+    if os.path.exists(spec_path):
+        try:
+            with open(spec_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as exc:
+            content = f"# Error reading active specification: {exc}"
+
+    is_valid, summary, error = validate_openapi_content(content)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="openapi_docs.html",
+        context={
+            "spec_content": content,
+            "spec_path": getattr(settings, "openapi_spec_path", "openapi.yaml"),
+            "is_valid": is_valid,
+            "summary": summary,
+            "error": error,
+        },
+    )
+
+
+@app.get("/api/openapi/current")
+async def get_current_openapi_spec():
+    """Returns the active OpenAPI specification content and parsed summary."""
+    spec_path = get_active_spec_path()
+    if not os.path.exists(spec_path):
+        return JSONResponse(
+            status_code=404,
+            content={"status": "error", "message": f"Specification file not found at {spec_path}"},
+        )
+
+    try:
+        with open(spec_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception as exc:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"Failed to read file: {str(exc)}"},
+        )
+
+    is_valid, summary, error = validate_openapi_content(content)
+    fmt = "json" if spec_path.endswith(".json") else "yaml"
+
+    return {
+        "content": content,
+        "format": fmt,
+        "path": getattr(settings, "openapi_spec_path", "openapi.yaml"),
+        "valid": is_valid,
+        "summary": summary,
+        "error": error,
+    }
+
+
+@app.post("/api/openapi/validate")
+async def validate_openapi_spec(payload: Dict[str, Any]):
+    """Validates an OpenAPI specification document without saving."""
+    content = payload.get("content", "")
+    is_valid, summary, error = validate_openapi_content(content)
+    return {
+        "valid": is_valid,
+        "summary": summary,
+        "error": error,
+    }
+
+
+@app.post("/api/openapi/save")
+async def save_active_openapi_spec(payload: Dict[str, Any]):
+    """Validates and persists the active OpenAPI specification file."""
+    content = payload.get("content", "")
+    is_valid, summary, error = validate_openapi_content(content)
+
+    if not is_valid:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "status": "error",
+                "message": f"Cannot save invalid OpenAPI specification: {error}",
+                "error": error,
+            },
+        )
+
+    spec_path = get_active_spec_path()
+    try:
+        # Write validated content to active specification file
+        with open(spec_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        return {
+            "status": "saved",
+            "path": getattr(settings, "openapi_spec_path", "openapi.yaml"),
+            "message": "Active OpenAPI specification successfully updated and persisted.",
+            "summary": summary,
+        }
+    except Exception as exc:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"Failed to save specification file: {str(exc)}"},
+        )
+

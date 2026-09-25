@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>OpenAPI Documentation - API Sentinel</title>
+<meta name="description" content="Manage, upload, edit, and validate the active OpenAPI specification for API Sentinel."/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error": "#ba1a1a",
+          "inverse-surface": "#283044",
+          "tertiary-fixed": "#ffdbcd",
+          "on-secondary-fixed-variant": "#38485d",
+          "surface-container-highest": "#dae2fd",
+          "surface-container-high": "#e2e7ff",
+          "outline-variant": "#c3c6d7",
+          "surface": "#faf8ff",
+          "inverse-primary": "#b4c5ff",
+          "outline": "#737686",
+          "on-secondary-fixed": "#0b1c30",
+          "on-tertiary-container": "#ffede6",
+          "surface-container-low": "#f2f3ff",
+          "primary-fixed": "#dbe1ff",
+          "on-error": "#ffffff",
+          "on-tertiary": "#ffffff",
+          "surface-container": "#eaedff",
+          "primary-container": "#2563eb",
+          "surface-variant": "#dae2fd",
+          "surface-bright": "#faf8ff",
+          "on-background": "#131b2e",
+          "on-surface-variant": "#434655",
+          "on-tertiary-fixed": "#360f00",
+          "on-surface": "#131b2e",
+          "primary-fixed-dim": "#b4c5ff",
+          "error-container": "#ffdad6",
+          "on-secondary": "#ffffff",
+          "tertiary-container": "#bc4800",
+          "secondary-container": "#d0e1fb",
+          "secondary-fixed-dim": "#b7c8e1",
+          "surface-tint": "#0053db",
+          "on-secondary-container": "#54647a",
+          "tertiary": "#943700",
+          "surface-container-lowest": "#ffffff",
+          "tertiary-fixed-dim": "#ffb596",
+          "on-primary": "#ffffff",
+          "on-primary-fixed": "#00174b",
+          "secondary": "#505f76",
+          "surface-dim": "#d2d9f4",
+          "primary": "#004ac6",
+          "background": "#faf8ff",
+          "on-primary-fixed-variant": "#003ea8",
+          "on-error-container": "#93000a",
+          "inverse-on-surface": "#eef0ff",
+          "secondary-fixed": "#d3e4fe",
+          "on-tertiary-fixed-variant": "#7d2d00",
+          "on-primary-container": "#eeefff"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "lg": "24px",
+          "xs": "4px",
+          "sm": "8px",
+          "md": "16px",
+          "gutter": "16px",
+          "base": "4px",
+          "xl": "32px",
+          "margin-mobile": "16px",
+          "margin-desktop": "32px"
+        },
+        "fontFamily": {
+          "code-md": ["JetBrains Mono"],
+          "body-lg": ["Inter"],
+          "headline-lg": ["Geist"],
+          "headline-sm": ["Geist"],
+          "body-sm": ["Inter"],
+          "label-caps": ["Inter"],
+          "headline-md": ["Geist"],
+          "body-md": ["Inter"]
+        },
+        "fontSize": {
+          "code-md": ["13px", { "lineHeight": "20px", "fontWeight": "450" }],
+          "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+          "headline-lg": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+          "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+          "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+          "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+          "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+          "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { background-color: #faf8ff; color: #131b2e; }
+  .widget-card {
+    background-color: #ffffff;
+    border: 1px solid #c3c6d7;
+    border-radius: 0.5rem;
+    padding: 24px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  
+  .editor-textarea {
+    font-family: 'JetBrains Mono', monospace;
+    tab-size: 2;
+    white-space: pre;
+  }
+  .drop-zone {
+    border: 2px dashed #c3c6d7;
+    transition: all 0.2s ease-in-out;
+  }
+  .drop-zone.dragover {
+    border-color: #004ac6;
+    background-color: #f2f3ff;
+  }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen overflow-hidden flex flex-col">
+
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-lg h-16 bg-surface border-b border-outline-variant">
+  <div class="flex items-center gap-sm">
+    <span class="material-symbols-outlined text-primary text-2xl">shield</span>
+    <a href="/" class="text-headline-sm font-headline-sm font-bold text-primary hover:opacity-90">API Sentinel</a>
+    <div class="hidden sm:flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-primary/10 border border-primary/30 rounded-full">
+      <span class="material-symbols-outlined text-primary text-xs">menu_book</span>
+      <span class="text-[11px] font-bold text-primary uppercase tracking-wide">Spec Manager</span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <a href="/" class="px-3 py-1.5 border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-variant rounded text-xs font-semibold flex items-center gap-1.5 transition-colors">
+      <span class="material-symbols-outlined text-sm">dashboard</span> Dashboard
+    </a>
+    <a href="/api/export/json" download="validation_report.json" class="px-2.5 py-1.5 border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-variant rounded text-xs font-semibold flex items-center gap-1 transition-colors">
+      <span class="material-symbols-outlined text-sm">download</span> JSON
+    </a>
+    <a href="/api/export/html" download="validation_report.html" class="px-2.5 py-1.5 bg-primary text-on-primary hover:opacity-90 rounded text-xs font-semibold flex items-center gap-1 transition-opacity">
+      <span class="material-symbols-outlined text-sm">file_open</span> HTML
+    </a>
+  </div>
+</header>
+
+<div class="flex h-full pt-16">
+  <!-- SideNavBar -->
+  <nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-60 flex flex-col p-md bg-surface-container border-r border-outline-variant z-40 hidden md:flex">
+    <div class="mb-md">
+      <div class="text-label-caps font-label-caps text-on-surface-variant mb-xs">NAVIGATION</div>
+      <div class="text-body-sm font-body-sm text-on-surface font-semibold">API Sentinel Workspace</div>
+    </div>
+    <ul class="flex flex-col gap-sm flex-1">
+      <li>
+        <a class="flex items-center gap-3 p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-all font-body-sm text-body-sm" href="/">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a class="flex items-center gap-3 p-2 bg-secondary-container text-on-secondary-container font-semibold rounded-lg active:scale-95 duration-100 font-body-sm text-body-sm" href="/openapi-docs">
+          <span class="material-symbols-outlined fill text-primary">menu_book</span>
+          <span>OpenAPI Docs</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Active Spec Info Card -->
+    <div class="p-3 bg-surface border border-outline-variant rounded-lg text-xs flex flex-col gap-1">
+      <div class="text-[10px] uppercase font-bold text-on-surface-variant flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs text-primary">verified</span> Active File
+      </div>
+      <div class="font-code-md text-[11px] text-on-surface truncate" title="{{ spec_path }}">{{ spec_path }}</div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-1 ml-0 md:ml-60 p-md md:p-lg overflow-y-auto h-[calc(100vh-64px)]">
+    <div class="max-w-[1440px] mx-auto">
+      
+      <!-- Page Header -->
+      <header class="mb-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-sm text-on-surface-variant font-body-sm mb-1">
+            <a href="/" class="hover:text-primary transition-colors">Dashboard</a>
+            <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+            <span class="text-on-surface font-semibold">OpenAPI Documentation</span>
+          </div>
+          <h1 class="font-headline-lg text-headline-lg text-on-surface">OpenAPI Specification Management</h1>
+          <p class="font-body-md text-body-md text-on-surface-variant">Upload, edit, validate, and persist the OpenAPI YAML/JSON specification used for live contract validation.</p>
+        </div>
+
+        <!-- Global Status Badge -->
+        <div id="spec-status-pill" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold {% if is_valid %}bg-emerald-500/10 text-emerald-700 border border-emerald-500/30{% else %}bg-error/10 text-error border border-error/30{% endif %}">
+          <span class="material-symbols-outlined text-sm">{% if is_valid %}check_circle{% else %}error{% endif %}</span>
+          <span id="spec-status-text">{% if is_valid %}VALID SPECIFICATION{% else %}VALIDATION ERROR{% endif %}</span>
+        </div>
+      </header>
+
+      <!-- Alert Banner for Errors / Success -->
+      <div id="toast-message" class="hidden mb-md p-3 rounded-lg border text-sm flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span id="toast-icon" class="material-symbols-outlined text-sm"></span>
+          <span id="toast-text"></span>
+        </div>
+        <button onclick="hideToast()" class="text-on-surface-variant hover:text-on-surface">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+
+      <!-- Main Layout: 2 Columns on Desktop -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+        
+        <!-- Left Column: Upload & Editor (8 cols) -->
+        <div class="lg:col-span-8 flex flex-col gap-lg">
+          
+          <!-- Upload Area Card -->
+          <div class="widget-card">
+            <div class="flex items-center justify-between mb-sm">
+              <h2 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-xl">upload_file</span>
+                Upload Specification
+              </h2>
+              <span class="text-xs text-on-surface-variant font-code-md">.yaml, .yml, .json</span>
+            </div>
+
+            <div id="drop-zone" class="drop-zone rounded-lg p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-surface hover:bg-surface-container-low">
+              <input id="file-input" type="file" accept=".yaml,.yml,.json,application/json,application/x-yaml,text/yaml" class="hidden"/>
+              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined text-2xl">cloud_upload</span>
+              </div>
+              <div class="text-center">
+                <span class="font-semibold text-primary">Click to browse</span> or drag and drop your OpenAPI document
+              </div>
+              <p class="text-xs text-on-surface-variant">Supports standard OpenAPI 3.0, 3.1, or Swagger 2.0 files</p>
+              <div id="uploaded-filename" class="hidden mt-2 px-3 py-1 bg-secondary-container text-on-secondary-container font-code-md text-xs rounded-full flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-xs">attach_file</span>
+                <span id="uploaded-filename-text"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Specification Editor Card -->
+          <div class="widget-card flex flex-col">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-md border-b border-outline-variant gap-2 mb-md">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-xl">edit_document</span>
+                <h2 class="text-headline-sm font-headline-sm text-on-surface">Specification Editor</h2>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="line-char-counter" class="text-xs font-code-md text-on-surface-variant">0 lines</span>
+                <button id="btn-copy-spec" title="Copy to clipboard" class="px-2.5 py-1 text-xs border border-outline-variant bg-surface-container hover:bg-surface-variant rounded font-semibold flex items-center gap-1 transition-colors cursor-pointer">
+                  <span class="material-symbols-outlined text-xs">content_copy</span> Copy
+                </button>
+                <button id="btn-load-active" title="Reload from active file on disk" class="px-2.5 py-1 text-xs border border-outline-variant bg-surface-container hover:bg-surface-variant rounded font-semibold flex items-center gap-1 transition-colors cursor-pointer">
+                  <span class="material-symbols-outlined text-xs">restore_page</span> Reset
+                </button>
+              </div>
+            </div>
+
+            <!-- Textarea Editor -->
+            <div class="relative flex-1">
+              <textarea id="spec-editor" class="editor-textarea w-full h-[450px] p-4 bg-surface-container-lowest border border-outline-variant rounded-md text-body-md font-code-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-y" spellcheck="false" placeholder="Paste or edit OpenAPI YAML or JSON here...">{{ spec_content }}</textarea>
+            </div>
+
+            <!-- Action Controls Bar -->
+            <div class="flex flex-wrap items-center justify-between pt-md mt-md border-t border-outline-variant gap-3">
+              <div class="text-xs text-on-surface-variant flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">info</span>
+                <span>Saving will update the active specification for runtime drift detection.</span>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <button id="btn-validate" class="px-4 py-2 border border-primary text-primary hover:bg-primary/5 rounded-md font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer">
+                  <span class="material-symbols-outlined text-sm">fact_check</span> Validate Spec
+                </button>
+                <button id="btn-save" class="px-4 py-2 bg-primary text-on-primary hover:opacity-90 rounded-md font-semibold text-xs flex items-center gap-1.5 transition-opacity cursor-pointer">
+                  <span class="material-symbols-outlined text-sm">save</span> Save Active Spec
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Validation Summary & Discovered Endpoints (4 cols) -->
+        <div class="lg:col-span-4 flex flex-col gap-lg">
+          
+          <!-- Summary & Metadata Card -->
+          <div class="widget-card">
+            <h2 class="text-headline-sm font-headline-sm text-on-surface mb-md flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-xl">analytics</span>
+              Specification Overview
+            </h2>
+
+            <div id="validation-error-box" class="{% if not error %}hidden{% endif %} p-3 mb-md bg-error/10 border border-error/30 rounded-lg text-xs text-error">
+              <div class="font-bold flex items-center gap-1 mb-1">
+                <span class="material-symbols-outlined text-sm">error</span> Parse / Validation Error
+              </div>
+              <div id="validation-error-text" class="font-code-md whitespace-pre-wrap">{{ error or '' }}</div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+              <div class="flex justify-between items-center py-1.5 border-b border-outline-variant text-sm">
+                <span class="text-on-surface-variant font-medium">API Title</span>
+                <span id="summary-title" class="font-semibold text-on-surface text-right truncate max-w-[180px]">{{ summary.title if summary else 'N/A' }}</span>
+              </div>
+              <div class="flex justify-between items-center py-1.5 border-b border-outline-variant text-sm">
+                <span class="text-on-surface-variant font-medium">API Version</span>
+                <span id="summary-version" class="font-code-md font-semibold text-on-surface">{{ summary.version if summary else 'N/A' }}</span>
+              </div>
+              <div class="flex justify-between items-center py-1.5 border-b border-outline-variant text-sm">
+                <span class="text-on-surface-variant font-medium">OpenAPI Standard</span>
+                <span id="summary-openapi" class="font-code-md px-2 py-0.5 bg-surface-container rounded text-xs text-primary font-bold">{{ summary.openapi_version if summary else 'N/A' }}</span>
+              </div>
+              <div class="flex justify-between items-center py-1.5 border-b border-outline-variant text-sm">
+                <span class="text-on-surface-variant font-medium">Total Path Routes</span>
+                <span id="summary-paths" class="font-headline-sm font-bold text-primary">{{ summary.paths_count if summary else 0 }}</span>
+              </div>
+              <div class="flex justify-between items-center py-1.5 text-sm">
+                <span class="text-on-surface-variant font-medium">Component Schemas</span>
+                <span id="summary-schemas" class="font-headline-sm font-bold text-secondary">{{ summary.schemas_count if summary else 0 }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Discovered Endpoints Card -->
+          <div class="widget-card flex flex-col flex-1">
+            <div class="flex items-center justify-between mb-sm">
+              <h2 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-xl">api</span>
+                Discovered Endpoints
+              </h2>
+              <span id="endpoints-badge" class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-xs font-bold rounded-full">
+                {{ summary.endpoints | length if summary and summary.endpoints else 0 }}
+              </span>
+            </div>
+            
+            <p class="text-xs text-on-surface-variant mb-md">All routes parsed from this specification that API Sentinel monitors for runtime drift.</p>
+
+            <div id="endpoints-list" class="flex flex-col gap-2 max-h-[380px] overflow-y-auto pr-1">
+              {% if summary and summary.endpoints %}
+                {% for ep in summary.endpoints %}
+                <div class="p-2.5 bg-surface-container-low border border-outline-variant rounded-md flex flex-col gap-1.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    {% for m in ep.methods %}
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-code-md {% if m == 'GET' %}bg-primary text-on-primary{% elif m == 'POST' %}bg-emerald-700 text-white{% elif m == 'PUT' %}bg-amber-600 text-white{% elif m == 'DELETE' %}bg-error text-white{% else %}bg-secondary text-white{% endif %}">
+                      {{ m }}
+                    </span>
+                    {% endfor %}
+                    <span class="font-code-md text-xs font-semibold text-on-surface truncate" title="{{ ep.path }}">{{ ep.path }}</span>
+                  </div>
+                  {% if ep.summary %}
+                  <div class="text-[11px] text-on-surface-variant truncate">{{ ep.summary }}</div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="p-6 text-center text-xs text-on-surface-variant">
+                  No endpoints parsed. Paste or upload a valid specification to inspect routes.
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const editor = document.getElementById("spec-editor");
+  const dropZone = document.getElementById("drop-zone");
+  const fileInput = document.getElementById("file-input");
+  const btnValidate = document.getElementById("btn-validate");
+  const btnSave = document.getElementById("btn-save");
+  const btnCopy = document.getElementById("btn-copy-spec");
+  const btnLoadActive = document.getElementById("btn-load-active");
+  const lineCharCounter = document.getElementById("line-char-counter");
+
+  // Update line counter
+  function updateLineCounter() {
+    const text = editor.value;
+    const lines = text ? text.split("\n").length : 0;
+    const chars = text ? text.length : 0;
+    lineCharCounter.textContent = `${lines} lines • ${chars} chars`;
+  }
+  editor.addEventListener("input", updateLineCounter);
+  updateLineCounter();
+
+  // Tab key support in textarea
+  editor.addEventListener("keydown", function(e) {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.substring(0, start) + "  " + this.value.substring(end);
+      this.selectionStart = this.selectionEnd = start + 2;
+      updateLineCounter();
+    }
+  });
+
+  // Toast notifications
+  function showToast(message, isError = false) {
+    const toast = document.getElementById("toast-message");
+    const icon = document.getElementById("toast-icon");
+    const text = document.getElementById("toast-text");
+    toast.className = isError 
+      ? "mb-md p-3 rounded-lg border text-sm flex items-center justify-between bg-error/10 border-error/30 text-error"
+      : "mb-md p-3 rounded-lg border text-sm flex items-center justify-between bg-emerald-500/10 border-emerald-500/30 text-emerald-800";
+    icon.textContent = isError ? "error" : "check_circle";
+    text.textContent = message;
+    toast.classList.remove("hidden");
+  }
+
+  function hideToast() {
+    document.getElementById("toast-message").classList.add("hidden");
+  }
+
+  // Update UI with validation results
+  function applyValidationResult(data) {
+    const statusPill = document.getElementById("spec-status-pill");
+    const statusText = document.getElementById("spec-status-text");
+    const errorBox = document.getElementById("validation-error-box");
+    const errorText = document.getElementById("validation-error-text");
+    const sumTitle = document.getElementById("summary-title");
+    const sumVersion = document.getElementById("summary-version");
+    const sumOpenapi = document.getElementById("summary-openapi");
+    const sumPaths = document.getElementById("summary-paths");
+    const sumSchemas = document.getElementById("summary-schemas");
+    const endpointsList = document.getElementById("endpoints-list");
+    const endpointsBadge = document.getElementById("endpoints-badge");
+
+    if (data.valid && data.summary) {
+      statusPill.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/30";
+      statusPill.querySelector(".material-symbols-outlined").textContent = "check_circle";
+      statusText.textContent = "VALID SPECIFICATION";
+      errorBox.classList.add("hidden");
+
+      const s = data.summary;
+      sumTitle.textContent = s.title || "Untitled API";
+      sumVersion.textContent = s.version || "1.0.0";
+      sumOpenapi.textContent = s.openapi_version || "3.x";
+      sumPaths.textContent = s.paths_count || 0;
+      sumSchemas.textContent = s.schemas_count || 0;
+
+      const endpoints = s.endpoints || [];
+      endpointsBadge.textContent = endpoints.length;
+
+      if (endpoints.length > 0) {
+        endpointsList.innerHTML = endpoints.map(ep => {
+          const methodPills = (ep.methods || []).map(m => {
+            let color = "bg-secondary text-white";
+            if (m === "GET") color = "bg-primary text-on-primary";
+            if (m === "POST") color = "bg-emerald-700 text-white";
+            if (m === "PUT") color = "bg-amber-600 text-white";
+            if (m === "DELETE") color = "bg-error text-white";
+            return `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-code-md ${color}">${m}</span>`;
+          }).join(" ");
+          
+          return `
+            <div class="p-2.5 bg-surface-container-low border border-outline-variant rounded-md flex flex-col gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                ${methodPills}
+                <span class="font-code-md text-xs font-semibold text-on-surface truncate" title="${ep.path}">${ep.path}</span>
+              </div>
+              ${ep.summary ? `<div class="text-[11px] text-on-surface-variant truncate">${ep.summary}</div>` : ''}
+            </div>
+          `;
+        }).join("");
+      } else {
+        endpointsList.innerHTML = `<div class="p-6 text-center text-xs text-on-surface-variant">No paths defined in this specification.</div>`;
+      }
+    } else {
+      statusPill.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-error/10 text-error border border-error/30";
+      statusPill.querySelector(".material-symbols-outlined").textContent = "error";
+      statusText.textContent = "VALIDATION ERROR";
+      
+      errorText.textContent = data.error || "Unknown validation error";
+      errorBox.classList.remove("hidden");
+    }
+  }
+
+  // Validate Action
+  async function validateSpec() {
+    const content = editor.value;
+    try {
+      const resp = await fetch("/api/openapi/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: content })
+      });
+      const data = await resp.json();
+      applyValidationResult(data);
+      if (data.valid) {
+        showToast("OpenAPI specification is valid and ready to be saved!");
+      } else {
+        showToast("Validation failed: " + data.error, true);
+      }
+      return data.valid;
+    } catch (err) {
+      showToast("Network error during validation: " + err.message, true);
+      return false;
+    }
+  }
+  btnValidate.addEventListener("click", validateSpec);
+
+  // Save Action
+  btnSave.addEventListener("click", async function() {
+    const content = editor.value;
+    try {
+      const resp = await fetch("/api/openapi/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: content })
+      });
+      const data = await resp.json();
+      if (resp.ok && data.status === "saved") {
+        applyValidationResult({ valid: true, summary: data.summary });
+        showToast(data.message || "Active OpenAPI specification saved successfully!");
+      } else {
+        showToast(data.message || "Failed to save specification.", true);
+        if (data.error) {
+          applyValidationResult({ valid: false, error: data.error });
+        }
+      }
+    } catch (err) {
+      showToast("Network error while saving: " + err.message, true);
+    }
+  });
+
+  // Load Active Spec
+  async function loadActiveSpec() {
+    try {
+      const resp = await fetch("/api/openapi/current");
+      const data = await resp.json();
+      if (resp.ok && data.content) {
+        editor.value = data.content;
+        updateLineCounter();
+        applyValidationResult(data);
+        showToast("Active specification loaded from disk.");
+      } else {
+        showToast("Could not load active specification.", true);
+      }
+    } catch (err) {
+      showToast("Error loading active spec: " + err.message, true);
+    }
+  }
+  btnLoadActive.addEventListener("click", loadActiveSpec);
+
+  // Copy Spec
+  btnCopy.addEventListener("click", function() {
+    navigator.clipboard.writeText(editor.value).then(() => {
+      showToast("Specification copied to clipboard!");
+    }).catch(() => {
+      showToast("Failed to copy to clipboard.", true);
+    });
+  });
+
+  // File Upload Handlers (Click + Drag & Drop)
+  dropZone.addEventListener("click", () => fileInput.click());
+
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("dragover");
+  });
+
+  dropZone.addEventListener("dragleave", () => {
+    dropZone.classList.remove("dragover");
+  });
+
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("dragover");
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  fileInput.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFile(e.target.files[0]);
+    }
+  });
+
+  function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      editor.value = evt.target.result;
+      updateLineCounter();
+      
+      const fnameBox = document.getElementById("uploaded-filename");
+      const fnameText = document.getElementById("uploaded-filename-text");
+      fnameText.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      fnameBox.classList.remove("hidden");
+      
+      validateSpec();
+    };
+    reader.onerror = function() {
+      showToast("Failed to read the uploaded file.", true);
+    };
+    reader.readAsText(file);
+  }
+</script>
+
+</body>
+</html>
