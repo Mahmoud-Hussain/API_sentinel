@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>OpenAPI Documentation Portal - API Sentinel</title>
+<meta name="description" content="Guided OpenAPI Documentation Builder, Specification Generator, and Contract Validator for API Sentinel."/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error": "#ba1a1a",
+          "inverse-surface": "#283044",
+          "surface-container-highest": "#dae2fd",
+          "surface-container-high": "#e2e7ff",
+          "outline-variant": "#c3c6d7",
+          "surface": "#faf8ff",
+          "inverse-primary": "#b4c5ff",
+          "outline": "#737686",
+          "surface-container-low": "#f2f3ff",
+          "primary-fixed": "#dbe1ff",
+          "surface-container": "#eaedff",
+          "primary-container": "#2563eb",
+          "surface-variant": "#dae2fd",
+          "surface-bright": "#faf8ff",
+          "on-background": "#131b2e",
+          "on-surface-variant": "#434655",
+          "on-surface": "#131b2e",
+          "primary": "#004ac6",
+          "secondary": "#505f76",
+          "secondary-container": "#d0e1fb",
+          "on-secondary-container": "#54647a",
+          "surface-container-lowest": "#ffffff",
+          "background": "#faf8ff"
+        },
+        "fontFamily": {
+          "code-md": ["JetBrains Mono", "monospace"],
+          "body-md": ["Inter", "sans-serif"],
+          "headline-lg": ["Geist", "sans-serif"],
+          "headline-sm": ["Geist", "sans-serif"]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { background-color: #faf8ff; color: #131b2e; font-family: 'Inter', sans-serif; }
+  .widget-card {
+    background-color: #ffffff;
+    border: 1px solid #c3c6d7;
+    border-radius: 0.75rem;
+    padding: 24px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  
+  .editor-textarea {
+    font-family: 'JetBrains Mono', monospace;
+    tab-size: 2;
+    white-space: pre;
+  }
+  .step-pill {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+  .step-pill.active {
+    background-color: #004ac6;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 74, 198, 0.25);
+  }
+  .step-pill.completed {
+    background-color: #d0e1fb;
+    color: #004ac6;
+  }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen overflow-hidden flex flex-col">
+
+<!-- Top Header Navigation -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-surface border-b border-outline-variant shadow-xs">
+  <div class="flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary text-2xl">shield</span>
+    <a href="/" class="text-xl font-headline-sm font-bold text-primary hover:opacity-90">API Sentinel</a>
+    <div class="hidden sm:flex items-center gap-1.5 ml-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
+      <span class="material-symbols-outlined text-primary text-xs">auto_fix_high</span>
+      <span class="text-xs font-bold text-primary uppercase tracking-wider">OpenAPI Guided Builder</span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <button id="btn-load-sample" title="Load sample API specification data into form" class="px-3 py-1.5 border border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer">
+      <span class="material-symbols-outlined text-sm">lightbulb</span> Load Sample API
+    </button>
+    <button id="btn-reset-form" title="Clear form" class="px-3 py-1.5 border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-variant rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer">
+      <span class="material-symbols-outlined text-sm">restart_alt</span> Reset
+    </button>
+    <a href="/" class="px-3 py-1.5 border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-variant rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+      <span class="material-symbols-outlined text-sm">dashboard</span> Dashboard
+    </a>
+  </div>
+</header>
+
+<div class="flex h-full pt-16">
+  <!-- Sidebar Navigation -->
+  <nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col p-4 bg-surface-container border-r border-outline-variant z-40 hidden md:flex">
+    <div class="mb-4">
+      <div class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">NAVIGATION</div>
+      <div class="text-xs font-semibold text-on-surface">API Sentinel Portal</div>
+    </div>
+    <ul class="flex flex-col gap-1.5 flex-1">
+      <li>
+        <a class="flex items-center gap-3 p-2.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-lg transition-all text-xs font-medium" href="/">
+          <span class="material-symbols-outlined text-lg">dashboard</span>
+          <span>Runtime Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a class="flex items-center gap-3 p-2.5 bg-secondary-container text-on-secondary-container font-semibold rounded-lg text-xs" href="/openapi-docs">
+          <span class="material-symbols-outlined fill text-primary text-lg">menu_book</span>
+          <span>OpenAPI Form Wizard</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Active Spec Info Card -->
+    <div class="p-3.5 bg-surface border border-outline-variant rounded-xl text-xs flex flex-col gap-1.5 shadow-xs">
+      <div class="text-[10px] uppercase font-bold text-on-surface-variant flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs text-primary">verified</span> Active Contract Spec
+      </div>
+      <div class="font-code-md text-[11px] text-on-surface font-semibold truncate" title="{{ spec_path }}">{{ spec_path }}</div>
+      <div class="text-[10px] text-on-surface-variant">
+        {% if is_valid %}
+          <span class="text-emerald-700 font-bold flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600 inline-block"></span> Valid Specification</span>
+        {% else %}
+          <span class="text-error font-bold flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-error inline-block"></span> Invalid Specification</span>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Wizard Area -->
+  <main class="flex-1 ml-0 md:ml-64 p-4 md:p-6 overflow-y-auto h-[calc(100vh-64px)]">
+    <div class="max-w-[1360px] mx-auto pb-12">
+      
+      <!-- Wizard Progress Stepper -->
+      <div class="mb-6 bg-white border border-outline-variant rounded-xl p-3 shadow-xs">
+        <div class="flex items-center justify-between gap-1 overflow-x-auto pb-1 text-xs">
+          <button onclick="goToStep(1)" id="step-btn-1" class="step-pill active flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap">
+            <span class="w-5 h-5 rounded-full bg-white/20 text-center leading-5 text-[11px] font-bold">1</span>
+            <span>API Info</span>
+          </button>
+          <span class="text-outline-variant material-symbols-outlined text-sm">chevron_right</span>
+
+          <button onclick="goToStep(2)" id="step-btn-2" class="step-pill flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap bg-surface-container text-on-surface">
+            <span class="w-5 h-5 rounded-full bg-surface-variant text-center leading-5 text-[11px] font-bold">2</span>
+            <span>Servers</span>
+          </button>
+          <span class="text-outline-variant material-symbols-outlined text-sm">chevron_right</span>
+
+          <button onclick="goToStep(3)" id="step-btn-3" class="step-pill flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap bg-surface-container text-on-surface">
+            <span class="w-5 h-5 rounded-full bg-surface-variant text-center leading-5 text-[11px] font-bold">3</span>
+            <span>Endpoints</span>
+          </button>
+          <span class="text-outline-variant material-symbols-outlined text-sm">chevron_right</span>
+
+          <button onclick="goToStep(4)" id="step-btn-4" class="step-pill flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap bg-surface-container text-on-surface">
+            <span class="w-5 h-5 rounded-full bg-surface-variant text-center leading-5 text-[11px] font-bold">4</span>
+            <span>Parameters</span>
+          </button>
+          <span class="text-outline-variant material-symbols-outlined text-sm">chevron_right</span>
+
+          <button onclick="goToStep(5)" id="step-btn-5" class="step-pill flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap bg-surface-container text-on-surface">
+            <span class="w-5 h-5 rounded-full bg-surface-variant text-center leading-5 text-[11px] font-bold">5</span>
+            <span>Request Body</span>
+          </button>
+          <span class="text-outline-variant material-symbols-outlined text-sm">chevron_right</span>
+
+          <button onclick="goToStep(6)" id="step-btn-6" class="step-pill flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap bg-surface-container text-on-surface">
+            <span class="w-5 h-5 rounded-full bg-surface-variant text-center leading-5 text-[11px] font-bold">6</span>
+            <span>Responses</span>
+          </button>
+          <span class="text-outline-variant material-symbols-outlined text-sm">chevron_right</span>
+
+          <button onclick="goToStep(7)" id="step-btn-7" class="step-pill flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap bg-surface-container text-on-surface">
+            <span class="w-5 h-5 rounded-full bg-surface-variant text-center leading-5 text-[11px] font-bold">7</span>
+            <span>Review</span>
+          </button>
+          <span class="text-outline-variant material-symbols-outlined text-sm">chevron_right</span>
+
+          <button onclick="goToStep(8)" id="step-btn-8" class="step-pill flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap bg-surface-container text-on-surface">
+            <span class="w-5 h-5 rounded-full bg-surface-variant text-center leading-5 text-[11px] font-bold">8</span>
+            <span>Generate & Save</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Toast Notification Banner -->
+      <div id="toast-message" class="hidden mb-4 p-3.5 rounded-xl border text-sm flex items-center justify-between shadow-xs">
+        <div class="flex items-center gap-2.5">
+          <span id="toast-icon" class="material-symbols-outlined text-base"></span>
+          <span id="toast-text" class="font-medium"></span>
+        </div>
+        <button onclick="hideToast()" class="text-on-surface-variant hover:text-on-surface">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+
+      <!-- STEP 1: API Information -->
+      <div id="step-section-1" class="step-section">
+        <div class="widget-card">
+          <div class="flex items-center justify-between pb-4 mb-4 border-b border-outline-variant">
+            <div>
+              <h2 class="text-lg font-bold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">info</span>
+                Step 1: General API Information
+              </h2>
+              <p class="text-xs text-on-surface-variant mt-1">Provide basic metadata describing your API service.</p>
+            </div>
+            <span class="px-2.5 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">OpenAPI 3.0.3</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-on-surface mb-1">API Title <span class="text-error">*</span></label>
+              <input id="info-title" type="text" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs focus:ring-1 focus:ring-primary focus:border-primary" placeholder="e.g. User Management Service API" value="User Management Service API" required/>
+              <p class="text-[11px] text-on-surface-variant mt-1">A human-readable name for your API.</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-on-surface mb-1">API Version <span class="text-error">*</span></label>
+              <input id="info-version" type="text" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs focus:ring-1 focus:ring-primary focus:border-primary" placeholder="e.g. 1.0.0" value="1.0.0" required/>
+              <p class="text-[11px] text-on-surface-variant mt-1">Semantic version of your API specification.</p>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-on-surface mb-1">API Description (Optional)</label>
+              <textarea id="info-description" rows="3" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Explain the purpose and capabilities of this API...">Core user profile and authentication endpoints monitored by API Sentinel.</textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-on-surface mb-1">OpenAPI Specification Standard</label>
+              <select id="info-openapi-version" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs">
+                <option value="3.0.3" selected>OpenAPI 3.0.3 (Standard)</option>
+                <option value="3.0.0">OpenAPI 3.0.0</option>
+                <option value="3.1.0">OpenAPI 3.1.0</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-on-surface mb-1">Contact Name (Optional)</label>
+              <input id="info-contact-name" type="text" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs" placeholder="e.g. API Engineering Team"/>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-on-surface mb-1">Contact Email (Optional)</label>
+              <input id="info-contact-email" type="email" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs" placeholder="e.g. api-team@example.com"/>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-on-surface mb-1">License Name (Optional)</label>
+              <input id="info-license-name" type="text" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs" placeholder="e.g. Apache 2.0 or MIT"/>
+            </div>
+          </div>
+
+          <div class="flex justify-end mt-6 pt-4 border-t border-outline-variant">
+            <button onclick="goToStep(2)" class="px-5 py-2 bg-primary text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer">
+              Next: Servers <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Servers / Base URLs -->
+      <div id="step-section-2" class="step-section hidden">
+        <div class="widget-card">
+          <div class="flex items-center justify-between pb-4 mb-4 border-b border-outline-variant">
+            <div>
+              <h2 class="text-lg font-bold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">dns</span>
+                Step 2: API Servers / Base URLs
+              </h2>
+              <p class="text-xs text-on-surface-variant mt-1">Define the target host URLs where your API is hosted.</p>
+            </div>
+            <button onclick="addServerRow()" class="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer">
+              <span class="material-symbols-outlined text-sm">add</span> Add Server
+            </button>
+          </div>
+
+          <div id="servers-container" class="flex flex-col gap-3">
+            <!-- Dynamic Server Rows -->
+          </div>
+
+          <div class="flex justify-between mt-6 pt-4 border-t border-outline-variant">
+            <button onclick="goToStep(1)" class="px-4 py-2 border border-outline-variant bg-surface-container text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:bg-surface-variant transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+            </button>
+            <button onclick="goToStep(3)" class="px-5 py-2 bg-primary text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer">
+              Next: Endpoints <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Endpoint Management -->
+      <div id="step-section-3" class="step-section hidden">
+        <div class="widget-card">
+          <div class="flex items-center justify-between pb-4 mb-4 border-b border-outline-variant">
+            <div>
+              <h2 class="text-lg font-bold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">api</span>
+                Step 3: API Endpoints
+              </h2>
+              <p class="text-xs text-on-surface-variant mt-1">Define the URL paths and HTTP methods exposed by your API.</p>
+            </div>
+            <button onclick="addEndpointModal()" class="px-3.5 py-1.5 bg-primary text-white hover:opacity-90 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+              <span class="material-symbols-outlined text-sm">add_circle</span> Add An API Endpoint
+            </button>
+          </div>
+
+          <div id="endpoints-container" class="flex flex-col gap-3">
+            <!-- Dynamic Endpoint Cards -->
+          </div>
+
+          <div class="flex justify-between mt-6 pt-4 border-t border-outline-variant">
+            <button onclick="goToStep(2)" class="px-4 py-2 border border-outline-variant bg-surface-container text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:bg-surface-variant transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+            </button>
+            <button onclick="goToStep(4)" class="px-5 py-2 bg-primary text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer">
+              Next: Parameters <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Parameters -->
+      <div id="step-section-4" class="step-section hidden">
+        <div class="widget-card">
+          <div class="flex items-center justify-between pb-4 mb-4 border-b border-outline-variant">
+            <div>
+              <h2 class="text-lg font-bold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">tune</span>
+                Step 4: Endpoint Parameters
+              </h2>
+              <p class="text-xs text-on-surface-variant mt-1">Configure path, query, header, or cookie parameters for each endpoint.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-semibold text-on-surface">Select Endpoint:</label>
+              <select id="param-endpoint-select" onchange="renderParametersView()" class="px-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-code-md">
+                <!-- Endpoint options -->
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3 flex items-center justify-between">
+            <div id="param-active-endpoint-badge" class="text-xs font-semibold text-on-surface"></div>
+            <button onclick="addParameterRow()" class="px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer">
+              <span class="material-symbols-outlined text-sm">add</span> Add Parameter
+            </button>
+          </div>
+
+          <div id="parameters-container" class="flex flex-col gap-2.5">
+            <!-- Dynamic Parameter Rows -->
+          </div>
+
+          <div class="flex justify-between mt-6 pt-4 border-t border-outline-variant">
+            <button onclick="goToStep(3)" class="px-4 py-2 border border-outline-variant bg-surface-container text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:bg-surface-variant transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+            </button>
+            <button onclick="goToStep(5)" class="px-5 py-2 bg-primary text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer">
+              Next: Request Body <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: Request Body -->
+      <div id="step-section-5" class="step-section hidden">
+        <div class="widget-card">
+          <div class="flex items-center justify-between pb-4 mb-4 border-b border-outline-variant">
+            <div>
+              <h2 class="text-lg font-bold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">data_object</span>
+                Step 5: Request Body Configuration
+              </h2>
+              <p class="text-xs text-on-surface-variant mt-1">Configure payload structure for endpoints that accept request data (e.g. POST, PUT, PATCH).</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-semibold text-on-surface">Select Endpoint:</label>
+              <select id="reqbody-endpoint-select" onchange="renderRequestBodyView()" class="px-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-code-md">
+                <!-- Endpoint options -->
+              </select>
+            </div>
+          </div>
+
+          <div id="request-body-content" class="flex flex-col gap-4">
+            <!-- Dynamic Request Body Form -->
+          </div>
+
+          <div class="flex justify-between mt-6 pt-4 border-t border-outline-variant">
+            <button onclick="goToStep(4)" class="px-4 py-2 border border-outline-variant bg-surface-container text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:bg-surface-variant transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+            </button>
+            <button onclick="goToStep(6)" class="px-5 py-2 bg-primary text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer">
+              Next: Responses <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6: Responses -->
+      <div id="step-section-6" class="step-section hidden">
+        <div class="widget-card">
+          <div class="flex items-center justify-between pb-4 mb-4 border-b border-outline-variant">
+            <div>
+              <h2 class="text-lg font-bold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">call_received</span>
+                Step 6: Endpoint Responses
+              </h2>
+              <p class="text-xs text-on-surface-variant mt-1">Specify HTTP response status codes, descriptions, and payload schemas.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-semibold text-on-surface">Select Endpoint:</label>
+              <select id="response-endpoint-select" onchange="renderResponsesView()" class="px-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-code-md">
+                <!-- Endpoint options -->
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3 flex items-center justify-between">
+            <div id="response-active-endpoint-badge" class="text-xs font-semibold text-on-surface"></div>
+            <button onclick="addResponseRow()" class="px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer">
+              <span class="material-symbols-outlined text-sm">add</span> Add Response Status
+            </button>
+          </div>
+
+          <div id="responses-container" class="flex flex-col gap-4">
+            <!-- Dynamic Response Accordions -->
+          </div>
+
+          <div class="flex justify-between mt-6 pt-4 border-t border-outline-variant">
+            <button onclick="goToStep(5)" class="px-4 py-2 border border-outline-variant bg-surface-container text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:bg-surface-variant transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+            </button>
+            <button onclick="goToStep(7)" class="px-5 py-2 bg-primary text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer">
+              Next: Review Specification <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 7: Review -->
+      <div id="step-section-7" class="step-section hidden">
+        <div class="widget-card">
+          <div class="flex items-center justify-between pb-4 mb-4 border-b border-outline-variant">
+            <div>
+              <h2 class="text-lg font-bold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">fact_check</span>
+                Step 7: Specification Review
+              </h2>
+              <p class="text-xs text-on-surface-variant mt-1">Review your API definition before generating the standard OpenAPI YAML specification.</p>
+            </div>
+            <button onclick="generateYAML()" class="px-5 py-2 bg-primary text-white hover:opacity-90 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-opacity cursor-pointer">
+              <span class="material-symbols-outlined text-base">auto_fix_high</span> Generate OpenAPI YAML
+            </button>
+          </div>
+
+          <div id="review-content" class="flex flex-col gap-6">
+            <!-- Dynamic Review Summary Cards -->
+          </div>
+
+          <div class="flex justify-between mt-6 pt-4 border-t border-outline-variant">
+            <button onclick="goToStep(6)" class="px-4 py-2 border border-outline-variant bg-surface-container text-on-surface text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:bg-surface-variant transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+            </button>
+            <button onclick="generateYAML()" class="px-5 py-2 bg-primary text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer">
+              Generate YAML Contract <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 8: Generated YAML Preview & Save Active Spec -->
+      <div id="step-section-8" class="step-section hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Left Column: YAML Viewer (8 cols) -->
+          <div class="lg:col-span-8 flex flex-col gap-4">
+            <div class="widget-card flex flex-col">
+              <div class="flex items-center justify-between pb-4 mb-4 border-b border-outline-variant">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-xl">description</span>
+                  <div>
+                    <h2 class="text-base font-bold text-on-surface">Generated OpenAPI 3.0.3 YAML</h2>
+                    <p class="text-[11px] text-on-surface-variant">Validated standard contract generated from form inputs.</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button id="btn-copy-yaml" class="px-3 py-1.5 text-xs border border-outline-variant bg-surface-container hover:bg-surface-variant rounded-lg font-semibold flex items-center gap-1 transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined text-xs">content_copy</span> Copy YAML
+                  </button>
+                  <button onclick="goToStep(7)" class="px-3 py-1.5 text-xs border border-outline-variant bg-surface-container hover:bg-surface-variant rounded-lg font-semibold flex items-center gap-1 transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined text-xs">edit</span> Edit Form
+                  </button>
+                </div>
+              </div>
+
+              <textarea id="yaml-preview-editor" class="editor-textarea w-full h-[480px] p-4 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-code-md text-on-surface focus:outline-none focus:border-primary resize-y" spellcheck="false" placeholder="YAML specification will appear here..."></textarea>
+
+              <div class="flex items-center justify-between pt-4 mt-4 border-t border-outline-variant">
+                <div class="text-[11px] text-on-surface-variant flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-sm text-primary">info</span>
+                  <span>Saving will set this document as the active <strong class="font-code-md">openapi.yaml</strong> contract.</span>
+                </div>
+                <button id="btn-save-yaml" onclick="saveGeneratedSpec()" class="px-5 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                  <span class="material-symbols-outlined text-sm">save</span> Save Active OpenAPI Spec
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Live Validation & Summary (4 cols) -->
+          <div class="lg:col-span-4 flex flex-col gap-4">
+            
+            <!-- Validation Status Badge Card -->
+            <div class="widget-card">
+              <h3 class="text-sm font-bold text-on-surface mb-3 flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-primary text-base">verified</span>
+                Contract Validation Status
+              </h3>
+              
+              <div id="validation-pill" class="p-3 rounded-xl border flex items-center gap-2.5 mb-3 bg-emerald-500/10 border-emerald-500/30 text-emerald-800">
+                <span id="validation-icon" class="material-symbols-outlined text-lg text-emerald-700">check_circle</span>
+                <div>
+                  <div id="validation-status-text" class="text-xs font-bold">VALID OPENAPI SPECIFICATION</div>
+                  <div class="text-[10px] text-on-surface-variant">Validated with existing OpenAPIParser</div>
+                </div>
+              </div>
+
+              <div id="validation-error-container" class="hidden p-3 bg-error/10 border border-error/30 rounded-xl text-xs text-error font-code-md mb-3 whitespace-pre-wrap"></div>
+
+              <div class="flex flex-col gap-2 text-xs">
+                <div class="flex justify-between py-1 border-b border-outline-variant">
+                  <span class="text-on-surface-variant font-medium">API Title</span>
+                  <span id="summary-title" class="font-semibold text-on-surface truncate max-w-[150px]">-</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-outline-variant">
+                  <span class="text-on-surface-variant font-medium">API Version</span>
+                  <span id="summary-version" class="font-code-md font-semibold text-on-surface">-</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-outline-variant">
+                  <span class="text-on-surface-variant font-medium">OpenAPI Standard</span>
+                  <span id="summary-openapi" class="font-code-md px-2 py-0.5 bg-surface-container rounded text-[11px] text-primary font-bold">3.0.3</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-outline-variant">
+                  <span class="text-on-surface-variant font-medium">Total Path Endpoints</span>
+                  <span id="summary-paths" class="font-bold text-primary text-sm">0</span>
+                </div>
+                <div class="flex justify-between py-1">
+                  <span class="text-on-surface-variant font-medium">Component Schemas</span>
+                  <span id="summary-schemas" class="font-bold text-secondary text-sm">0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Monitored Endpoints Card -->
+            <div class="widget-card flex flex-col flex-1">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-bold text-on-surface flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-primary text-base">alt_route</span>
+                  Monitored Routes
+                </h3>
+                <span id="summary-endpoints-badge" class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[11px] font-bold rounded-full">0</span>
+              </div>
+              <div id="summary-endpoints-list" class="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1 text-xs mt-2">
+                <!-- Endpoints summary -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Add/Edit Endpoint Modal -->
+<div id="endpoint-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl border border-outline-variant">
+    <div class="flex items-center justify-between pb-3 mb-4 border-b border-outline-variant">
+      <h3 id="endpoint-modal-title" class="text-base font-bold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">add_circle</span> Add Endpoint
+      </h3>
+      <button onclick="closeEndpointModal()" class="text-on-surface-variant hover:text-on-surface">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="flex flex-col gap-3.5">
+      <input type="hidden" id="modal-endpoint-index" value="-1"/>
+      
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">HTTP Method <span class="text-error">*</span></label>
+        <select id="modal-endpoint-method" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-bold">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="PATCH">PATCH</option>
+          <option value="DELETE">DELETE</option>
+          <option value="HEAD">HEAD</option>
+          <option value="OPTIONS">OPTIONS</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Path Template <span class="text-error">*</span></label>
+        <input id="modal-endpoint-path" type="text" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-code-md" placeholder="e.g. /users or /users/{id}" value="/users"/>
+        <p class="text-[11px] text-on-surface-variant mt-1">Use <code class="font-code-md text-primary">{paramName}</code> syntax for path parameters.</p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Summary</label>
+        <input id="modal-endpoint-summary" type="text" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs" placeholder="e.g. List all users"/>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-on-surface mb-1">Description (Optional)</label>
+        <textarea id="modal-endpoint-description" rows="2" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs" placeholder="Detailed operation behavior..."></textarea>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-outline-variant">
+      <button onclick="closeEndpointModal()" class="px-4 py-2 border border-outline-variant rounded-lg text-xs font-semibold hover:bg-surface-variant">Cancel</button>
+      <button onclick="saveEndpointFromModal()" class="px-5 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:opacity-90">Save Endpoint</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =========================================================================
+  // Master Form State Object
+  // =========================================================================
+  let formState = {
+    openapi_version: "3.0.3",
+    info: {
+      title: "User Management Service API",
+      version: "1.0.0",
+      description: "Core user profile and authentication endpoints monitored by API Sentinel.",
+      contact: { name: "", email: "" },
+      license: { name: "", url: "" }
+    },
+    servers: [
+      { url: "http://127.0.0.1:8000", description: "Local Development API Server" },
+      { url: "https://api.example.com", description: "Production API Gateway" }
+    ],
+    endpoints: [
+      {
+        path: "/api/v1/users",
+        method: "GET",
+        summary: "List all users",
+        description: "Returns a paginated list of active users.",
+        parameters: [
+          { name: "page", location: "query", type: "integer", required: false, description: "Page number", example: 1, default: 1 },
+          { name: "limit", location: "query", type: "integer", required: false, description: "Items per page", example: 10, default: 10 }
+        ],
+        request_body: { enabled: false, content_type: "application/json", description: "", required: false, fields: [] },
+        responses: [
+          {
+            status_code: "200",
+            description: "List of users successfully retrieved",
+            content_type: "application/json",
+            fields: [
+              { name: "id", type: "integer", required: true, description: "Unique user identifier", example: 1 },
+              { name: "name", type: "string", required: true, description: "User full name", example: "Alice Johnson" },
+              { name: "email", type: "string", required: true, description: "User email address", example: "alice@example.com" }
+            ]
+          }
+        ]
+      },
+      {
+        path: "/api/v1/users",
+        method: "POST",
+        summary: "Create a new user",
+        description: "Registers a new user record.",
+        parameters: [],
+        request_body: {
+          enabled: true,
+          content_type: "application/json",
+          description: "User registration details",
+          required: true,
+          fields: [
+            { name: "name", type: "string", required: true, description: "Full name", example: "Bob Smith" },
+            { name: "email", type: "string", required: true, description: "Valid email address", example: "bob@example.com" },
+            { name: "role", type: "string", required: false, description: "User role", example: "user", default: "user" }
+          ]
+        },
+        responses: [
+          {
+            status_code: "201",
+            description: "User created successfully",
+            content_type: "application/json",
+            fields: [
+              { name: "id", type: "integer", required: true, description: "Generated User ID", example: 2 },
+              { name: "name", type: "string", required: true, description: "User name", example: "Bob Smith" },
+              { name: "email", type: "string", required: true, description: "User email", example: "bob@example.com" }
+            ]
+          },
+          {
+            status_code: "400",
+            description: "Invalid request payload",
+            content_type: "application/json",
+            fields: [
+              { name: "error", type: "string", required: true, description: "Error explanation", example: "Invalid email format" }
+            ]
+          }
+        ]
+      },
+      {
+        path: "/api/v1/users/{id}",
+        method: "GET",
+        summary: "Get user by ID",
+        description: "Retrieves single user profile by their ID.",
+        parameters: [
+          { name: "id", location: "path", type: "integer", required: true, description: "User ID", example: 42 }
+        ],
+        request_body: { enabled: false, content_type: "application/json", description: "", required: false, fields: [] },
+        responses: [
+          {
+            status_code: "200",
+            description: "User details found",
+            content_type: "application/json",
+            fields: [
+              { name: "id", type: "integer", required: true, description: "User ID", example: 42 },
+              { name: "name", type: "string", required: true, description: "User full name", example: "Alice Johnson" },
+              { name: "email", type: "string", required: true, description: "User email", example: "alice@example.com" }
+            ]
+          },
+          {
+            status_code: "404",
+            description: "User not found",
+            content_type: "application/json",
+            fields: [
+              { name: "detail", type: "string", required: true, description: "Error message", example: "User not found" }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+
+  let currentStep = 1;
+  let activeParamEndpointIndex = 0;
+  let activeReqBodyEndpointIndex = 0;
+  let activeResponseEndpointIndex = 0;
+
+  // =========================================================================
+  // Step Navigation
+  // =========================================================================
+  function goToStep(stepNum) {
+    saveCurrentStepData();
+    currentStep = stepNum;
+
+    for (let i = 1; i <= 8; i++) {
+      const section = document.getElementById(`step-section-${i}`);
+      const btn = document.getElementById(`step-btn-${i}`);
+      if (section && btn) {
+        if (i === stepNum) {
+          section.classList.remove("hidden");
+          btn.className = "step-pill active flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap";
+        } else {
+          section.classList.add("hidden");
+          btn.className = "step-pill flex items-center gap-1.5 px-3 py-2 rounded-lg whitespace-nowrap bg-surface-container text-on-surface";
+        }
+      }
+    }
+
+    // Refresh view for the target step
+    if (stepNum === 2) renderServersList();
+    if (stepNum === 3) renderEndpointsList();
+    if (stepNum === 4) { populateEndpointDropdowns(); renderParametersView(); }
+    if (stepNum === 5) { populateEndpointDropdowns(); renderRequestBodyView(); }
+    if (stepNum === 6) { populateEndpointDropdowns(); renderResponsesView(); }
+    if (stepNum === 7) renderReviewSection();
+  }
+
+  function saveCurrentStepData() {
+    // Save Step 1 Info
+    formState.info.title = document.getElementById("info-title").value.trim();
+    formState.info.version = document.getElementById("info-version").value.trim();
+    formState.info.description = document.getElementById("info-description").value.trim();
+    formState.openapi_version = document.getElementById("info-openapi-version").value;
+    formState.info.contact.name = document.getElementById("info-contact-name").value.trim();
+    formState.info.contact.email = document.getElementById("info-contact-email").value.trim();
+    formState.info.license.name = document.getElementById("info-license-name").value.trim();
+  }
+
+  // =========================================================================
+  // Toast Notifications
+  // =========================================================================
+  function showToast(message, isError = false) {
+    const toast = document.getElementById("toast-message");
+    const icon = document.getElementById("toast-icon");
+    const text = document.getElementById("toast-text");
+    toast.className = isError 
+      ? "mb-4 p-3.5 rounded-xl border text-sm flex items-center justify-between shadow-xs bg-error/10 border-error/30 text-error"
+      : "mb-4 p-3.5 rounded-xl border text-sm flex items-center justify-between shadow-xs bg-emerald-500/10 border-emerald-500/30 text-emerald-800";
+    icon.textContent = isError ? "error" : "check_circle";
+    text.textContent = message;
+    toast.classList.remove("hidden");
+  }
+
+  function hideToast() {
+    document.getElementById("toast-message").classList.add("hidden");
+  }
+
+  // =========================================================================
+  // STEP 2: Servers Management
+  // =========================================================================
+  function renderServersList() {
+    const container = document.getElementById("servers-container");
+    if (!formState.servers || formState.servers.length === 0) {
+      container.innerHTML = `<div class="p-6 text-center text-xs text-on-surface-variant bg-surface-container-low rounded-lg">No servers configured. Click "+ Add Server" to define your API host URL.</div>`;
+      return;
+    }
+
+    container.innerHTML = formState.servers.map((s, idx) => `
+      <div class="p-3.5 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-on-surface-variant mb-1">Server URL <span class="text-error">*</span></label>
+            <input type="text" value="${s.url}" onchange="updateServerField(${idx}, 'url', this.value)" class="w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs font-code-md" placeholder="e.g. https://api.example.com"/>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-on-surface-variant mb-1">Description (Environment)</label>
+            <input type="text" value="${s.description || ''}" onchange="updateServerField(${idx}, 'description', this.value)" class="w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs" placeholder="e.g. Production API Gateway"/>
+          </div>
+        </div>
+        <button onclick="removeServerRow(${idx})" class="p-2 text-on-surface-variant hover:text-error rounded-lg hover:bg-error/10 transition-colors cursor-pointer self-end sm:self-center" title="Remove Server">
+          <span class="material-symbols-outlined text-lg">delete</span>
+        </button>
+      </div>
+    `).join("");
+  }
+
+  function addServerRow() {
+    formState.servers.push({ url: "https://api.example.com", description: "API Server" });
+    renderServersList();
+  }
+
+  function updateServerField(index, field, value) {
+    if (formState.servers[index]) {
+      formState.servers[index][field] = value.trim();
+    }
+  }
+
+  function removeServerRow(index) {
+    formState.servers.splice(index, 1);
+    renderServersList();
+  }
+
+  // =========================================================================
+  // STEP 3: Endpoints Management
+  // =========================================================================
+  function getMethodBadgeColor(m) {
+    m = (m || "GET").toUpperCase();
+    if (m === "GET") return "bg-primary text-white";
+    if (m === "POST") return "bg-emerald-700 text-white";
+    if (m === "PUT") return "bg-amber-600 text-white";
+    if (m === "PATCH") return "bg-purple-600 text-white";
+    if (m === "DELETE") return "bg-error text-white";
+    return "bg-secondary text-white";
+  }
+
+  function renderEndpointsList() {
+    const container = document.getElementById("endpoints-container");
+    if (!formState.endpoints || formState.endpoints.length === 0) {
+      container.innerHTML = `<div class="p-8 text-center text-xs text-on-surface-variant bg-surface-container-low rounded-lg">No endpoints defined yet. Click "+ Add An API Endpoint" above to add your first route.</div>`;
+      return;
+    }
+
+    container.innerHTML = formState.endpoints.map((ep, idx) => `
+      <div class="p-4 bg-surface-container-lowest border border-outline-variant rounded-xl flex items-center justify-between gap-4 shadow-xs">
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+          <span class="px-2.5 py-1 rounded text-xs font-bold font-code-md ${getMethodBadgeColor(ep.method)}">
+            ${ep.method.toUpperCase()}
+          </span>
+          <div class="min-w-0 flex-1">
+            <div class="font-code-md text-xs font-bold text-on-surface truncate">${ep.path}</div>
+            <div class="text-[11px] text-on-surface-variant truncate">${ep.summary || ep.description || 'No summary'}</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="hidden sm:inline-block px-2 py-0.5 bg-surface-container text-on-surface-variant text-[11px] rounded-md font-semibold">
+            ${(ep.parameters || []).length} params
+          </span>
+          <span class="hidden sm:inline-block px-2 py-0.5 bg-surface-container text-on-surface-variant text-[11px] rounded-md font-semibold">
+            ${(ep.responses || []).length} responses
+          </span>
+          <button onclick="editEndpointModal(${idx})" class="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer" title="Edit Endpoint">
+            <span class="material-symbols-outlined text-base">edit</span>
+          </button>
+          <button onclick="deleteEndpoint(${idx})" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-lg transition-colors cursor-pointer" title="Delete Endpoint">
+            <span class="material-symbols-outlined text-base">delete</span>
+          </button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function addEndpointModal() {
+    document.getElementById("modal-endpoint-index").value = "-1";
+    document.getElementById("endpoint-modal-title").innerHTML = `<span class="material-symbols-outlined text-primary">add_circle</span> Add Endpoint`;
+    document.getElementById("modal-endpoint-method").value = "GET";
+    document.getElementById("modal-endpoint-path").value = "/api/v1/";
+    document.getElementById("modal-endpoint-summary").value = "";
+    document.getElementById("modal-endpoint-description").value = "";
+    document.getElementById("endpoint-modal").classList.remove("hidden");
+  }
+
+  function editEndpointModal(idx) {
+    const ep = formState.endpoints[idx];
+    if (!ep) return;
+    document.getElementById("modal-endpoint-index").value = idx;
+    document.getElementById("endpoint-modal-title").innerHTML = `<span class="material-symbols-outlined text-primary">edit</span> Edit Endpoint`;
+    document.getElementById("modal-endpoint-method").value = ep.method.toUpperCase();
+    document.getElementById("modal-endpoint-path").value = ep.path;
+    document.getElementById("modal-endpoint-summary").value = ep.summary || "";
+    document.getElementById("modal-endpoint-description").value = ep.description || "";
+    document.getElementById("endpoint-modal").classList.remove("hidden");
+  }
+
+  function closeEndpointModal() {
+    document.getElementById("endpoint-modal").classList.add("hidden");
+  }
+
+  function saveEndpointFromModal() {
+    const idx = parseInt(document.getElementById("modal-endpoint-index").value, 10);
+    const method = document.getElementById("modal-endpoint-method").value;
+    const path = document.getElementById("modal-endpoint-path").value.trim();
+    const summary = document.getElementById("modal-endpoint-summary").value.trim();
+    const description = document.getElementById("modal-endpoint-description").value.trim();
+
+    if (!path) {
+      alert("Path is required (e.g. /users)");
+      return;
+    }
+
+    if (idx >= 0 && formState.endpoints[idx]) {
+      formState.endpoints[idx].method = method;
+      formState.endpoints[idx].path = path;
+      formState.endpoints[idx].summary = summary;
+      formState.endpoints[idx].description = description;
+    } else {
+      formState.endpoints.push({
+        path: path,
+        method: method,
+        summary: summary,
+        description: description,
+        parameters: [],
+        request_body: { enabled: method === "POST" || method === "PUT" || method === "PATCH", content_type: "application/json", fields: [] },
+        responses: [
+          { status_code: "200", description: "Successful response", content_type: "application/json", fields: [] }
+        ]
+      });
+    }
+
+    closeEndpointModal();
+    renderEndpointsList();
+  }
+
+  function deleteEndpoint(idx) {
+    if (confirm("Delete this endpoint?")) {
+      formState.endpoints.splice(idx, 1);
+      renderEndpointsList();
+    }
+  }
+
+  function populateEndpointDropdowns() {
+    const selects = ["param-endpoint-select", "reqbody-endpoint-select", "response-endpoint-select"];
+    selects.forEach(selectId => {
+      const el = document.getElementById(selectId);
+      if (!el) return;
+      el.innerHTML = formState.endpoints.map((ep, idx) => `
+        <option value="${idx}">${ep.method.toUpperCase()} ${ep.path}</option>
+      `).join("");
+    });
+  }
+
+  // =========================================================================
+  // STEP 4: Parameters Management
+  // =========================================================================
+  function renderParametersView() {
+    const select = document.getElementById("param-endpoint-select");
+    const idx = parseInt(select.value || "0", 10);
+    activeParamEndpointIndex = isNaN(idx) ? 0 : idx;
+
+    const ep = formState.endpoints[activeParamEndpointIndex];
+    const badge = document.getElementById("param-active-endpoint-badge");
+    const container = document.getElementById("parameters-container");
+
+    if (!ep) {
+      badge.textContent = "No endpoint selected";
+      container.innerHTML = `<div class="p-6 text-center text-xs text-on-surface-variant">Please add an endpoint in Step 3 first.</div>`;
+      return;
+    }
+
+    badge.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-bold ${getMethodBadgeColor(ep.method)}">${ep.method.toUpperCase()}</span> <span class="font-code-md text-xs font-bold">${ep.path}</span> (${ep.parameters ? ep.parameters.length : 0} parameters)`;
+
+    if (!ep.parameters || ep.parameters.length === 0) {
+      container.innerHTML = `<div class="p-6 text-center text-xs text-on-surface-variant bg-surface-container-low rounded-lg">No parameters defined for this endpoint. Click "+ Add Parameter" to add path, query, header, or cookie parameters.</div>`;
+      return;
+    }
+
+    container.innerHTML = ep.parameters.map((p, pIdx) => `
+      <div class="p-3 bg-surface-container-lowest border border-outline-variant rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+        <div class="sm:col-span-3">
+          <label class="block text-[10px] font-semibold text-on-surface-variant mb-0.5">Name</label>
+          <input type="text" value="${p.name}" onchange="updateParamField(${pIdx}, 'name', this.value)" class="w-full px-2.5 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs font-code-md" placeholder="e.g. id or page"/>
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-[10px] font-semibold text-on-surface-variant mb-0.5">Location</label>
+          <select onchange="updateParamField(${pIdx}, 'location', this.value)" class="w-full px-2 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs">
+            <option value="query" ${p.location === 'query' ? 'selected' : ''}>query</option>
+            <option value="path" ${p.location === 'path' ? 'selected' : ''}>path</option>
+            <option value="header" ${p.location === 'header' ? 'selected' : ''}>header</option>
+            <option value="cookie" ${p.location === 'cookie' ? 'selected' : ''}>cookie</option>
+          </select>
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-[10px] font-semibold text-on-surface-variant mb-0.5">Data Type</label>
+          <select onchange="updateParamField(${pIdx}, 'type', this.value)" class="w-full px-2 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs font-code-md">
+            <option value="string" ${p.type === 'string' ? 'selected' : ''}>string</option>
+            <option value="integer" ${p.type === 'integer' ? 'selected' : ''}>integer</option>
+            <option value="number" ${p.type === 'number' ? 'selected' : ''}>number</option>
+            <option value="boolean" ${p.type === 'boolean' ? 'selected' : ''}>boolean</option>
+          </select>
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-[10px] font-semibold text-on-surface-variant mb-0.5">Example</label>
+          <input type="text" value="${p.example !== undefined ? p.example : ''}" onchange="updateParamField(${pIdx}, 'example', this.value)" class="w-full px-2.5 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs font-code-md" placeholder="e.g. 1"/>
+        </div>
+
+        <div class="sm:col-span-2 flex items-center gap-2 pt-3 sm:pt-0">
+          <label class="flex items-center gap-1.5 text-xs text-on-surface cursor-pointer">
+            <input type="checkbox" ${p.required ? 'checked' : ''} onchange="updateParamField(${pIdx}, 'required', this.checked)" class="rounded text-primary focus:ring-primary"/>
+            <span>Required</span>
+          </label>
+        </div>
+
+        <div class="sm:col-span-1 flex justify-end">
+          <button onclick="removeParamRow(${pIdx})" class="p-1 text-on-surface-variant hover:text-error rounded-lg hover:bg-error/10 transition-colors" title="Delete">
+            <span class="material-symbols-outlined text-base">delete</span>
+          </button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function addParameterRow() {
+    const ep = formState.endpoints[activeParamEndpointIndex];
+    if (!ep) return;
+    if (!ep.parameters) ep.parameters = [];
+    ep.parameters.push({ name: "param_name", location: "query", type: "string", required: false, example: "" });
+    renderParametersView();
+  }
+
+  function updateParamField(pIdx, field, value) {
+    const ep = formState.endpoints[activeParamEndpointIndex];
+    if (ep && ep.parameters[pIdx]) {
+      ep.parameters[pIdx][field] = value;
+    }
+  }
+
+  function removeParamRow(pIdx) {
+    const ep = formState.endpoints[activeParamEndpointIndex];
+    if (ep && ep.parameters) {
+      ep.parameters.splice(pIdx, 1);
+      renderParametersView();
+    }
+  }
+
+  // =========================================================================
+  // STEP 5: Request Body Management
+  // =========================================================================
+  function renderRequestBodyView() {
+    const select = document.getElementById("reqbody-endpoint-select");
+    const idx = parseInt(select.value || "0", 10);
+    activeReqBodyEndpointIndex = isNaN(idx) ? 0 : idx;
+
+    const ep = formState.endpoints[activeReqBodyEndpointIndex];
+    const container = document.getElementById("request-body-content");
+
+    if (!ep) {
+      container.innerHTML = `<div class="p-6 text-center text-xs text-on-surface-variant">Please add an endpoint first.</div>`;
+      return;
+    }
+
+    if (!ep.request_body) {
+      ep.request_body = { enabled: false, content_type: "application/json", description: "", required: true, fields: [] };
+    }
+
+    const rb = ep.request_body;
+
+    container.innerHTML = `
+      <div class="p-4 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col gap-4">
+        <div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="rb-enabled" ${rb.enabled ? 'checked' : ''} onchange="updateRequestBodyToggle(this.checked)" class="w-4 h-4 rounded text-primary focus:ring-primary"/>
+            <span class="text-xs font-bold text-on-surface">Enable Request Body for this Endpoint</span>
+          </label>
+          <span class="px-2.5 py-0.5 rounded text-xs font-bold ${getMethodBadgeColor(ep.method)}">${ep.method.toUpperCase()} ${ep.path}</span>
+        </div>
+
+        <div id="rb-fields-section" class="${rb.enabled ? '' : 'opacity-40 pointer-events-none'} flex flex-col gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-on-surface-variant mb-1">Content-Type</label>
+              <select onchange="updateRequestBodyField('content_type', this.value)" class="w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs font-code-md">
+                <option value="application/json" ${rb.content_type === 'application/json' ? 'selected' : ''}>application/json</option>
+                <option value="application/x-www-form-urlencoded" ${rb.content_type === 'application/x-www-form-urlencoded' ? 'selected' : ''}>application/x-www-form-urlencoded</option>
+                <option value="multipart/form-data" ${rb.content_type === 'multipart/form-data' ? 'selected' : ''}>multipart/form-data</option>
+                <option value="text/plain" ${rb.content_type === 'text/plain' ? 'selected' : ''}>text/plain</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-on-surface-variant mb-1">Body Description</label>
+              <input type="text" value="${rb.description || ''}" onchange="updateRequestBodyField('description', this.value)" class="w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs" placeholder="e.g. Payload containing user attributes"/>
+            </div>
+
+            <div class="flex items-center pt-5">
+              <label class="flex items-center gap-2 text-xs font-semibold text-on-surface cursor-pointer">
+                <input type="checkbox" ${rb.required ? 'checked' : ''} onchange="updateRequestBodyField('required', this.checked)" class="rounded text-primary focus:ring-primary"/>
+                <span>Request Body is Required</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- JSON Schema Fields -->
+          <div class="mt-2">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-xs font-bold text-on-surface">Payload Field Schema (JSON Properties)</div>
+              <button onclick="addRequestBodyFieldRow()" class="px-2.5 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer">
+                <span class="material-symbols-outlined text-sm">add</span> Add Field
+              </button>
+            </div>
+
+            <div id="rb-fields-container" class="flex flex-col gap-2">
+              ${(rb.fields || []).map((f, fIdx) => `
+                <div class="p-2.5 bg-surface border border-outline-variant rounded-lg grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                  <div class="sm:col-span-3">
+                    <input type="text" value="${f.name}" onchange="updateReqBodyProperty(${fIdx}, 'name', this.value)" class="w-full px-2.5 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-code-md" placeholder="Field name (e.g. email)"/>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <select onchange="updateReqBodyProperty(${fIdx}, 'type', this.value)" class="w-full px-2 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-code-md">
+                      <option value="string" ${f.type === 'string' ? 'selected' : ''}>string</option>
+                      <option value="integer" ${f.type === 'integer' ? 'selected' : ''}>integer</option>
+                      <option value="number" ${f.type === 'number' ? 'selected' : ''}>number</option>
+                      <option value="boolean" ${f.type === 'boolean' ? 'selected' : ''}>boolean</option>
+                      <option value="object" ${f.type === 'object' ? 'selected' : ''}>object</option>
+                      <option value="array" ${f.type === 'array' ? 'selected' : ''}>array</option>
+                    </select>
+                  </div>
+                  <div class="sm:col-span-3">
+                    <input type="text" value="${f.description || ''}" onchange="updateReqBodyProperty(${fIdx}, 'description', this.value)" class="w-full px-2.5 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs" placeholder="Field description"/>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <input type="text" value="${f.example !== undefined ? f.example : ''}" onchange="updateReqBodyProperty(${fIdx}, 'example', this.value)" class="w-full px-2.5 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-xs font-code-md" placeholder="Example value"/>
+                  </div>
+                  <div class="sm:col-span-1 flex items-center">
+                    <label class="flex items-center gap-1 text-[11px] text-on-surface cursor-pointer">
+                      <input type="checkbox" ${f.required ? 'checked' : ''} onchange="updateReqBodyProperty(${fIdx}, 'required', this.checked)" class="rounded text-primary"/>
+                      <span>Req</span>
+                    </label>
+                  </div>
+                  <div class="sm:col-span-1 flex justify-end">
+                    <button onclick="removeRequestBodyFieldRow(${fIdx})" class="p-1 text-on-surface-variant hover:text-error" title="Delete">
+                      <span class="material-symbols-outlined text-base">delete</span>
+                    </button>
+                  </div>
+                </div>
+              `).join("")}
+              ${(!rb.fields || rb.fields.length === 0) ? `<div class="p-4 text-center text-xs text-on-surface-variant bg-surface rounded-lg">No fields defined yet. Click "+ Add Field" above.</div>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateRequestBodyToggle(checked) {
+    const ep = formState.endpoints[activeReqBodyEndpointIndex];
+    if (ep && ep.request_body) {
+      ep.request_body.enabled = checked;
+      renderRequestBodyView();
+    }
+  }
+
+  function updateRequestBodyField(field, value) {
+    const ep = formState.endpoints[activeReqBodyEndpointIndex];
+    if (ep && ep.request_body) {
+      ep.request_body[field] = value;
+    }
+  }
+
+  function addRequestBodyFieldRow() {
+    const ep = formState.endpoints[activeReqBodyEndpointIndex];
+    if (ep && ep.request_body) {
+      if (!ep.request_body.fields) ep.request_body.fields = [];
+      ep.request_body.fields.push({ name: "new_field", type: "string", required: true, description: "", example: "" });
+      renderRequestBodyView();
+    }
+  }
+
+  function updateReqBodyProperty(fIdx, field, value) {
+    const ep = formState.endpoints[activeReqBodyEndpointIndex];
+    if (ep && ep.request_body && ep.request_body.fields[fIdx]) {
+      ep.request_body.fields[fIdx][field] = value;
+    }
+  }
+
+  function removeRequestBodyFieldRow(fIdx) {
+    const ep = formState.endpoints[activeReqBodyEndpointIndex];
+    if (ep && ep.request_body && ep.request_body.fields) {
+      ep.request_body.fields.splice(fIdx, 1);
+      renderRequestBodyView();
+    }
+  }
+
+  // =========================================================================
+  // STEP 6: Responses Management
+  // =========================================================================
+  function renderResponsesView() {
+    const select = document.getElementById("response-endpoint-select");
+    const idx = parseInt(select.value || "0", 10);
+    activeResponseEndpointIndex = isNaN(idx) ? 0 : idx;
+
+    const ep = formState.endpoints[activeResponseEndpointIndex];
+    const badge = document.getElementById("response-active-endpoint-badge");
+    const container = document.getElementById("responses-container");
+
+    if (!ep) {
+      badge.textContent = "No endpoint selected";
+      container.innerHTML = `<div class="p-6 text-center text-xs text-on-surface-variant">Please select or add an endpoint first.</div>`;
+      return;
+    }
+
+    badge.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-bold ${getMethodBadgeColor(ep.method)}">${ep.method.toUpperCase()}</span> <span class="font-code-md text-xs font-bold">${ep.path}</span> (${ep.responses ? ep.responses.length : 0} status codes)`;
+
+    if (!ep.responses || ep.responses.length === 0) {
+      container.innerHTML = `<div class="p-6 text-center text-xs text-on-surface-variant bg-surface-container-low rounded-lg">No response status codes defined. Click "+ Add Response Status" above.</div>`;
+      return;
+    }
+
+    container.innerHTML = ep.responses.map((r, rIdx) => `
+      <div class="p-4 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col gap-3 shadow-xs">
+        <div class="flex items-center justify-between pb-2 border-b border-outline-variant">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 bg-secondary-container text-on-secondary-container font-code-md font-bold text-xs rounded-md">HTTP ${r.status_code}</span>
+            <span class="text-xs font-semibold text-on-surface">${r.description || 'Response'}</span>
+          </div>
+          <button onclick="removeResponseRow(${rIdx})" class="p-1 text-on-surface-variant hover:text-error" title="Delete Response">
+            <span class="material-symbols-outlined text-base">delete</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[10px] font-semibold text-on-surface-variant mb-0.5">Status Code</label>
+            <input type="text" value="${r.status_code}" onchange="updateResponseField(${rIdx}, 'status_code', this.value)" class="w-full px-2.5 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs font-code-md" placeholder="e.g. 200, 201, 404"/>
+          </div>
+          <div>
+            <label class="block text-[10px] font-semibold text-on-surface-variant mb-0.5">Description</label>
+            <input type="text" value="${r.description || ''}" onchange="updateResponseField(${rIdx}, 'description', this.value)" class="w-full px-2.5 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs" placeholder="e.g. Successful operation"/>
+          </div>
+          <div>
+            <label class="block text-[10px] font-semibold text-on-surface-variant mb-0.5">Content-Type</label>
+            <select onchange="updateResponseField(${rIdx}, 'content_type', this.value)" class="w-full px-2.5 py-1.5 bg-surface border border-outline-variant rounded-lg text-xs font-code-md">
+              <option value="application/json" ${r.content_type === 'application/json' ? 'selected' : ''}>application/json</option>
+              <option value="text/plain" ${r.content_type === 'text/plain' ? 'selected' : ''}>text/plain</option>
+              <option value="" ${!r.content_type ? 'selected' : ''}>None (No Body / 204)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Response Body Fields -->
+        <div class="mt-2 pt-2 border-t border-outline-variant/50">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Response JSON Properties</span>
+            <button onclick="addResponseFieldRow(${rIdx})" class="px-2 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 rounded text-[11px] font-semibold flex items-center gap-1 cursor-pointer">
+              <span class="material-symbols-outlined text-xs">add</span> Add Field
+            </button>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            ${(r.fields || []).map((f, fIdx) => `
+              <div class="p-2 bg-surface border border-outline-variant rounded-lg grid grid-cols-1 sm:grid-cols-12 gap-2 items-center text-xs">
+                <div class="sm:col-span-4">
+                  <input type="text" value="${f.name}" onchange="updateResponseProperty(${rIdx}, ${fIdx}, 'name', this.value)" class="w-full px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded text-xs font-code-md" placeholder="Field name (e.g. id)"/>
+                </div>
+                <div class="sm:col-span-3">
+                  <select onchange="updateResponseProperty(${rIdx}, ${fIdx}, 'type', this.value)" class="w-full px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded text-xs font-code-md">
+                    <option value="string" ${f.type === 'string' ? 'selected' : ''}>string</option>
+                    <option value="integer" ${f.type === 'integer' ? 'selected' : ''}>integer</option>
+                    <option value="number" ${f.type === 'number' ? 'selected' : ''}>number</option>
+                    <option value="boolean" ${f.type === 'boolean' ? 'selected' : ''}>boolean</option>
+                    <option value="object" ${f.type === 'object' ? 'selected' : ''}>object</option>
+                    <option value="array" ${f.type === 'array' ? 'selected' : ''}>array</option>
+                  </select>
+                </div>
+                <div class="sm:col-span-3">
+                  <input type="text" value="${f.example !== undefined ? f.example : ''}" onchange="updateResponseProperty(${rIdx}, ${fIdx}, 'example', this.value)" class="w-full px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded text-xs font-code-md" placeholder="Example"/>
+                </div>
+                <div class="sm:col-span-1 flex items-center">
+                  <label class="flex items-center gap-1 text-[10px] text-on-surface cursor-pointer">
+                    <input type="checkbox" ${f.required ? 'checked' : ''} onchange="updateResponseProperty(${rIdx}, ${fIdx}, 'required', this.checked)" class="rounded text-primary"/>
+                    <span>Req</span>
+                  </label>
+                </div>
+                <div class="sm:col-span-1 flex justify-end">
+                  <button onclick="removeResponseFieldRow(${rIdx}, ${fIdx})" class="p-1 text-on-surface-variant hover:text-error" title="Delete">
+                    <span class="material-symbols-outlined text-xs">delete</span>
+                  </button>
+                </div>
+              </div>
+            `).join("")}
+            ${(!r.fields || r.fields.length === 0) ? `<div class="p-2 text-center text-[11px] text-on-surface-variant">No response body fields specified.</div>` : ''}
+          </div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function addResponseRow() {
+    const ep = formState.endpoints[activeResponseEndpointIndex];
+    if (!ep) return;
+    if (!ep.responses) ep.responses = [];
+    ep.responses.push({ status_code: "200", description: "Successful response", content_type: "application/json", fields: [] });
+    renderResponsesView();
+  }
+
+  function updateResponseField(rIdx, field, value) {
+    const ep = formState.endpoints[activeResponseEndpointIndex];
+    if (ep && ep.responses[rIdx]) {
+      ep.responses[rIdx][field] = value;
+    }
+  }
+
+  function removeResponseRow(rIdx) {
+    const ep = formState.endpoints[activeResponseEndpointIndex];
+    if (ep && ep.responses) {
+      ep.responses.splice(rIdx, 1);
+      renderResponsesView();
+    }
+  }
+
+  function addResponseFieldRow(rIdx) {
+    const ep = formState.endpoints[activeResponseEndpointIndex];
+    if (ep && ep.responses[rIdx]) {
+      if (!ep.responses[rIdx].fields) ep.responses[rIdx].fields = [];
+      ep.responses[rIdx].fields.push({ name: "field_name", type: "string", required: true, example: "" });
+      renderResponsesView();
+    }
+  }
+
+  function updateResponseProperty(rIdx, fIdx, field, value) {
+    const ep = formState.endpoints[activeResponseEndpointIndex];
+    if (ep && ep.responses[rIdx] && ep.responses[rIdx].fields[fIdx]) {
+      ep.responses[rIdx].fields[fIdx][field] = value;
+    }
+  }
+
+  function removeResponseFieldRow(rIdx, fIdx) {
+    const ep = formState.endpoints[activeResponseEndpointIndex];
+    if (ep && ep.responses[rIdx] && ep.responses[rIdx].fields) {
+      ep.responses[rIdx].fields.splice(fIdx, 1);
+      renderResponsesView();
+    }
+  }
+
+  // =========================================================================
+  // STEP 7: Review Section
+  // =========================================================================
+  function renderReviewSection() {
+    saveCurrentStepData();
+    const container = document.getElementById("review-content");
+
+    const serversHTML = (formState.servers || []).map(s => `
+      <div class="px-3 py-1.5 bg-surface rounded-lg font-code-md text-xs flex justify-between items-center border border-outline-variant">
+        <span class="font-bold text-primary">${s.url}</span>
+        <span class="text-on-surface-variant text-[11px]">${s.description || ''}</span>
+      </div>
+    `).join("") || `<div class="text-xs text-on-surface-variant">No servers defined.</div>`;
+
+    const endpointsHTML = (formState.endpoints || []).map((ep, idx) => {
+      const paramsSummary = (ep.parameters || []).map(p => `
+        <span class="px-2 py-0.5 bg-surface-container rounded font-code-md text-[11px]">${p.name} (${p.location})</span>
+      `).join(" ") || '<span class="text-on-surface-variant text-[11px]">None</span>';
+
+      const responsesSummary = (ep.responses || []).map(r => `
+        <span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container font-code-md font-bold text-[11px] rounded">${r.status_code}</span>
+      `).join(" ") || '<span class="text-on-surface-variant text-[11px]">None</span>';
+
+      return `
+        <div class="p-3.5 bg-surface border border-outline-variant rounded-xl flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-bold font-code-md ${getMethodBadgeColor(ep.method)}">${ep.method.toUpperCase()}</span>
+              <span class="font-code-md text-xs font-bold text-on-surface">${ep.path}</span>
+            </div>
+            <button onclick="goToStep(3)" class="text-primary text-xs font-semibold hover:underline">Edit</button>
+          </div>
+          <div class="text-xs text-on-surface-variant">${ep.summary || ep.description || 'No description'}</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1 border-t border-outline-variant/40">
+            <div><span class="font-semibold text-on-surface-variant">Parameters:</span> ${paramsSummary}</div>
+            <div><span class="font-semibold text-on-surface-variant">Responses:</span> ${responsesSummary}</div>
+          </div>
+        </div>
+      `;
+    }).join("") || `<div class="text-xs text-on-surface-variant">No endpoints defined.</div>`;
+
+    container.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- API Info Card -->
+        <div class="p-4 bg-surface-container-low border border-outline-variant rounded-xl flex flex-col gap-2">
+          <div class="flex justify-between items-center pb-2 border-b border-outline-variant">
+            <span class="text-xs font-bold text-on-surface uppercase tracking-wider">API Metadata</span>
+            <button onclick="goToStep(1)" class="text-primary text-xs font-semibold hover:underline">Edit</button>
+          </div>
+          <div class="text-sm font-bold text-on-surface">${formState.info.title || 'Untitled API'} <span class="font-code-md text-xs text-primary">v${formState.info.version || '1.0.0'}</span></div>
+          <p class="text-xs text-on-surface-variant">${formState.info.description || 'No description provided.'}</p>
+          <div class="text-[11px] text-on-surface-variant pt-1">Standard: <strong>OpenAPI ${formState.openapi_version}</strong></div>
+        </div>
+
+        <!-- Servers Card -->
+        <div class="p-4 bg-surface-container-low border border-outline-variant rounded-xl flex flex-col gap-2">
+          <div class="flex justify-between items-center pb-2 border-b border-outline-variant">
+            <span class="text-xs font-bold text-on-surface uppercase tracking-wider">Servers / Base URLs (${(formState.servers || []).length})</span>
+            <button onclick="goToStep(2)" class="text-primary text-xs font-semibold hover:underline">Edit</button>
+          </div>
+          <div class="flex flex-col gap-1.5">${serversHTML}</div>
+        </div>
+      </div>
+
+      <!-- Endpoints Breakdown -->
+      <div class="p-4 bg-surface-container-low border border-outline-variant rounded-xl flex flex-col gap-3">
+        <div class="flex justify-between items-center pb-2 border-b border-outline-variant">
+          <span class="text-xs font-bold text-on-surface uppercase tracking-wider">Configured Endpoints (${(formState.endpoints || []).length})</span>
+          <button onclick="goToStep(3)" class="text-primary text-xs font-semibold hover:underline">Manage Endpoints</button>
+        </div>
+        <div class="flex flex-col gap-2.5">${endpointsHTML}</div>
+      </div>
+    `;
+  }
+
+  // =========================================================================
+  // STEP 8: Generate OpenAPI YAML & Persist Active Spec
+  // =========================================================================
+  async function generateYAML() {
+    saveCurrentStepData();
+    goToStep(8);
+
+    try {
+      const resp = await fetch("/api/openapi/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formState)
+      });
+      const data = await resp.json();
+
+      if (data.yaml) {
+        document.getElementById("yaml-preview-editor").value = data.yaml;
+      }
+
+      applyValidationResult(data);
+
+      if (data.valid) {
+        showToast("OpenAPI 3.0.3 specification successfully generated and validated!");
+      } else {
+        showToast("Specification generated with validation warnings/errors: " + (data.error || ""), true);
+      }
+    } catch (err) {
+      showToast("Error generating specification: " + err.message, true);
+    }
+  }
+
+  function applyValidationResult(data) {
+    const pill = document.getElementById("validation-pill");
+    const icon = document.getElementById("validation-icon");
+    const statusText = document.getElementById("validation-status-text");
+    const errorBox = document.getElementById("validation-error-container");
+    const sumTitle = document.getElementById("summary-title");
+    const sumVersion = document.getElementById("summary-version");
+    const sumOpenapi = document.getElementById("summary-openapi");
+    const sumPaths = document.getElementById("summary-paths");
+    const sumSchemas = document.getElementById("summary-schemas");
+    const endpointsList = document.getElementById("summary-endpoints-list");
+    const endpointsBadge = document.getElementById("summary-endpoints-badge");
+
+    if (data.valid && data.summary) {
+      pill.className = "p-3 rounded-xl border flex items-center gap-2.5 mb-3 bg-emerald-500/10 border-emerald-500/30 text-emerald-800";
+      icon.className = "material-symbols-outlined text-lg text-emerald-700";
+      icon.textContent = "check_circle";
+      statusText.textContent = "VALID OPENAPI SPECIFICATION";
+      errorBox.classList.add("hidden");
+
+      const s = data.summary;
+      sumTitle.textContent = s.title || formState.info.title || "Untitled API";
+      sumVersion.textContent = s.version || formState.info.version || "1.0.0";
+      sumOpenapi.textContent = s.openapi_version || formState.openapi_version || "3.0.3";
+      sumPaths.textContent = s.paths_count || 0;
+      sumSchemas.textContent = s.schemas_count || 0;
+
+      const endpoints = s.endpoints || [];
+      endpointsBadge.textContent = endpoints.length;
+
+      if (endpoints.length > 0) {
+        endpointsList.innerHTML = endpoints.map(ep => {
+          const pills = (ep.methods || []).map(m => `
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-code-md ${getMethodBadgeColor(m)}">${m}</span>
+          `).join(" ");
+          return `
+            <div class="p-2 bg-surface-container-low border border-outline-variant rounded-lg flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                ${pills}
+                <span class="font-code-md text-xs font-semibold text-on-surface truncate">${ep.path}</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      } else {
+        endpointsList.innerHTML = `<div class="p-4 text-center text-xs text-on-surface-variant">No endpoints.</div>`;
+      }
+    } else {
+      pill.className = "p-3 rounded-xl border flex items-center gap-2.5 mb-3 bg-error/10 border-error/30 text-error";
+      icon.className = "material-symbols-outlined text-lg text-error";
+      icon.textContent = "error";
+      statusText.textContent = "VALIDATION ERROR";
+      errorBox.textContent = data.error || "Unknown validation error";
+      errorBox.classList.remove("hidden");
+    }
+  }
+
+  async function saveGeneratedSpec() {
+    const yamlContent = document.getElementById("yaml-preview-editor").value;
+    if (!yamlContent || !yamlContent.trim()) {
+      showToast("Cannot save empty specification.", true);
+      return;
+    }
+
+    try {
+      const resp = await fetch("/api/openapi/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: yamlContent })
+      });
+      const data = await resp.json();
+
+      if (resp.ok && data.status === "saved") {
+        applyValidationResult({ valid: true, summary: data.summary });
+        showToast("Active OpenAPI specification successfully saved to " + (data.path || "openapi.yaml") + "! Monitored services will use this contract for runtime drift detection.");
+      } else {
+        showToast(data.message || "Failed to save specification.", true);
+        if (data.error) {
+          applyValidationResult({ valid: false, error: data.error });
+        }
+      }
+    } catch (err) {
+      showToast("Network error saving specification: " + err.message, true);
+    }
+  }
+
+  // Copy YAML button
+  document.getElementById("btn-copy-yaml").addEventListener("click", function() {
+    const content = document.getElementById("yaml-preview-editor").value;
+    navigator.clipboard.writeText(content).then(() => {
+      showToast("Generated OpenAPI specification copied to clipboard!");
+    }).catch(() => {
+      showToast("Failed to copy to clipboard.", true);
+    });
+  });
+
+  // Reset form button
+  document.getElementById("btn-reset-form").addEventListener("click", function() {
+    if (confirm("Reset the form to an empty template?")) {
+      formState = {
+        openapi_version: "3.0.3",
+        info: { title: "", version: "1.0.0", description: "", contact: {}, license: {} },
+        servers: [{ url: "http://127.0.0.1:8000", description: "Local API" }],
+        endpoints: []
+      };
+      document.getElementById("info-title").value = "";
+      document.getElementById("info-version").value = "1.0.0";
+      document.getElementById("info-description").value = "";
+      goToStep(1);
+      showToast("Form reset to blank specification.");
+    }
+  });
+
+  // Load sample API button
+  document.getElementById("btn-load-sample").addEventListener("click", function() {
+    document.getElementById("info-title").value = "User Management Service API";
+    document.getElementById("info-version").value = "1.0.0";
+    document.getElementById("info-description").value = "Core user profile and authentication endpoints monitored by API Sentinel.";
+    goToStep(1);
+    showToast("Loaded sample API configuration into form.");
+  });
+
+  // Initial setup on page load
+  window.addEventListener("DOMContentLoaded", () => {
+    goToStep(1);
+  });
+</script>
+
+</body>
+</html>
