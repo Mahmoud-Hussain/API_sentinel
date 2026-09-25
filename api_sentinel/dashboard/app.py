@@ -21,7 +21,7 @@ from api_sentinel.validation_report import (
 from api_sentinel.diff_engine import DriftSeverity, DriftType
 from api_sentinel.openapi_parser import OpenAPIParser
 from api_sentinel.openapi_generator import generate_openapi_yaml, generate_openapi_spec
-from html_report import generate_html_report, export_json_report
+from api_sentinel.html_report import generate_html_report, export_json_report
 
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
