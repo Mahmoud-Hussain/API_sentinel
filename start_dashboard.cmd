@@ -30,7 +30,7 @@ echo Starting Dashboard...
 echo Press Ctrl+C to stop.
 echo.
 
-"%PYTHON%" -m uvicorn dashboard.app:app --reload --host 127.0.0.1 --port 8001
+"%PYTHON%" -m uvicorn api_sentinel.dashboard.app:app --reload --host 127.0.0.1 --port 8001
 
 echo.
 echo Dashboard stopped.
