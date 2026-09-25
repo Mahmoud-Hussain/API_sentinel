@@ -24,7 +24,7 @@
 
 ### From PyPI (Standard):
 ```bash
-pip install api-sentinel
+pip install api-drift-detector
 ```
 
 ### From GitHub (Latest):
