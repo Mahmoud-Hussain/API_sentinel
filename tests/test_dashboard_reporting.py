@@ -70,7 +70,7 @@ def sample_report() -> AggregateReport:
     )
 
 
-def test_validation_report_metrics(sample_report: ValidationReport):
+def test_validation_report_metrics(sample_report: AggregateReport):
     assert sample_report.total_endpoints == 3
     assert sample_report.passed_endpoints == 1
     assert sample_report.warning_count == 1
@@ -190,4 +190,74 @@ def test_dashboard_fastapi_endpoints(sample_report: AggregateReport):
     assert resp_clear.status_code == 200
     assert resp_clear.json()["total_endpoints"] == 0
     assert get_active_report().total_endpoints == 0
+
+
+def test_timeline_computation_empty():
+    report = AggregateReport(title="Empty Report", results=[])
+    tl = report.timeline
+    assert len(tl["bars"]) == 12
+    assert all(b["status"] == "EMPTY" for b in tl["bars"])
+    assert all(b["height_pct"] == 6 for b in tl["bars"])
+    assert tl["end_label"] == "Now"
+
+
+def test_timeline_computation_small(sample_report: AggregateReport):
+    tl = sample_report.timeline
+    assert len(tl["bars"]) == 12
+
+    # sample_report has 3 results: pass, warn, fail (reverse order in timeline)
+    # in sample_report.results: [0] PASSED, [1] WARNING, [2] FAILED
+    # chronological order (reversed): [0] FAILED, [1] WARNING, [2] PASSED
+    b0 = tl["bars"][0]
+    b1 = tl["bars"][1]
+    b2 = tl["bars"][2]
+
+    assert b0["status"] == "FAILED"
+    assert b0["height_pct"] == 40
+    assert b1["status"] == "WARNING"
+    assert b1["height_pct"] == 70
+    assert b2["status"] == "PASSED"
+    assert b2["height_pct"] == 100
+
+    # Remaining 9 bars should be EMPTY
+    for i in range(3, 12):
+        assert tl["bars"][i]["status"] == "EMPTY"
+        assert tl["bars"][i]["height_pct"] == 6
+
+
+def test_timeline_computation_bucketing():
+    # 24 results should partition into 12 buckets of 2 results each
+    results = []
+    for i in range(24):
+        status = ValidationStatus.PASSED if i % 2 == 0 else ValidationStatus.FAILED
+        results.append(
+            EndpointValidationResult(
+                endpoint=f"/api/v1/test_{i}",
+                method="GET",
+                status_code=200,
+                validation_status=status,
+            )
+        )
+    report = AggregateReport(results=results)
+    tl = report.timeline
+    assert len(tl["bars"]) == 12
+
+    for b in tl["bars"]:
+        assert b["total"] == 2
+        assert b["passed"] == 1
+        assert b["failed"] == 1
+        assert b["status"] == "FAILED"
+        assert b["pass_rate"] == 50
+        assert b["height_pct"] == 50
+
+
+def test_api_report_contains_timeline():
+    client = TestClient(app)
+    resp = client.get("/api/report")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "timeline" in data
+    assert "bars" in data["timeline"]
+    assert len(data["timeline"]["bars"]) == 12
+
 

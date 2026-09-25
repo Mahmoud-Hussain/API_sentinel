@@ -148,6 +148,15 @@ async def append_report_result(data: dict):
             return {"status": "skipped", "reason": "selective persistence enabled, ignored PASSED"}
 
     try:
+        ts = None
+        if data.get("timestamp"):
+            try:
+                ts = datetime.fromisoformat(data["timestamp"].replace("Z", "+00:00"))
+            except Exception:
+                ts = datetime.now(timezone.utc)
+        else:
+            ts = datetime.now(timezone.utc)
+
         async with AsyncSessionLocal() as session:
             record = ValidationReportRecord(
                 endpoint=data["endpoint"],
@@ -155,6 +164,7 @@ async def append_report_result(data: dict):
                 status_code=data.get("status_code", 200),
                 validation_status=data["validation_status"],
                 severity=data.get("severity") if data.get("severity") != "NONE" else None,
+                timestamp=ts,
                 expected_schema=data.get("expected_schema"),
                 actual_schema=data.get("actual_schema"),
             )
