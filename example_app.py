@@ -54,6 +54,7 @@ app = FastAPI(
 app.add_middleware(
     APISentinelMiddleware,
     openapi_path="openapi.yaml",   # relative to the working directory
+    dashboard_url="http://127.0.0.1:8001",  # URL of the API Sentinel dashboard
     enabled=True,
     print_clean=True,
 )
