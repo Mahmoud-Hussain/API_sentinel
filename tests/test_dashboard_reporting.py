@@ -13,8 +13,9 @@ from api_sentinel.validation_report import (
     ValidationStatus,
 )
 from api_sentinel.diff_engine import DriftSeverity, DriftType
-from html_report import generate_html_report, export_json_report
-from dashboard.app import app
+from api_sentinel.html_report import generate_html_report, export_json_report
+from api_sentinel.dashboard.app import app
+from api_sentinel.config import settings
 
 
 @pytest.fixture
@@ -119,77 +120,103 @@ def test_json_report_exporter(sample_report: AggregateReport, tmp_path):
     assert loaded_data["summary"]["total_endpoints"] == 3
 
 
-@pytest.mark.skip(reason="Tests need to be updated for the new SQLAlchemy DB backend")
 def test_dashboard_fastapi_endpoints(sample_report: AggregateReport):
-    pass
+    with TestClient(app) as client:
+        # Clear any preexisting test entries in the DB
+        client.post("/api/report/clear")
 
-    client = TestClient(app)
-
-    # Test Dashboard Home
-    resp_home = client.get("/")
-    assert resp_home.status_code == 200
-    assert "API Sentinel" in resp_home.text
-    assert "/api/v1/test_pass" in resp_home.text
-
-    # Test Endpoint Detail Page
-    resp_detail = client.get("/endpoint/detail?index=1")
-    assert resp_detail.status_code == 200
-    assert "/api/v1/test_warn" in resp_detail.text
-    assert "Extra field warn" in resp_detail.text
-
-    # Test API Get Report
-    resp_api = client.get("/api/report")
-    assert resp_api.status_code == 200
-    data = resp_api.json()
-    assert data["summary"]["total_endpoints"] == 3
-
-    # Test API Export JSON
-    resp_export_json = client.get("/api/export/json")
-    assert resp_export_json.status_code == 200
-    assert "attachment; filename=\"validation_report.json\"" in resp_export_json.headers["content-disposition"]
-
-    # Test API Export HTML
-    resp_export_html = client.get("/api/export/html")
-    assert resp_export_html.status_code == 200
-    assert "attachment; filename=\"validation_report.html\"" in resp_export_html.headers["content-disposition"]
-    assert "<!DOCTYPE html>" in resp_export_html.text
-
-    # Test API Update Report
-    new_report = AggregateReport(
-        title="Updated Report",
-        results=[
-            EndpointValidationResult(
-                endpoint="/api/v2/new_route",
-                method="GET",
-                status_code=200,
-                validation_status=ValidationStatus.PASSED,
+        # Populate with sample_report items
+        for res in sample_report.results:
+            client.post(
+                "/api/report/append",
+                json={
+                    "endpoint": res.endpoint,
+                    "method": res.method,
+                    "status_code": res.status_code,
+                    "validation_status": res.validation_status.value,
+                    "severity": res.severity.value if res.severity else None,
+                    "expected_schema": res.expected_schema,
+                    "actual_schema": res.actual_schema,
+                    "differences": res.differences,
+                },
             )
-        ],
-    )
-    resp_post = client.post("/api/report", json=new_report.to_dict())
-    assert resp_post.status_code == 200
-    assert resp_post.json()["total_endpoints"] == 1
-    assert get_active_report().results[0].endpoint == "/api/v2/new_route"
 
-    # Test API Append Result
-    append_data = {
-        "endpoint": "/api/v1/live_stream",
-        "method": "POST",
-        "status_code": 200,
-        "validation_status": "WARNING",
-        "severity": "WARNING",
-        "differences": [{"issue_type": "EXTRA_FIELD", "message": "Live drift detected"}],
-    }
-    resp_append = client.post("/api/report/append", json=append_data)
-    assert resp_append.status_code == 200
-    assert resp_append.json()["total_endpoints"] == 2
-    assert get_active_report().results[0].endpoint == "/api/v1/live_stream"
+        # Test Dashboard Home
+        resp_home = client.get("/")
+        assert resp_home.status_code == 200
+        assert "API Sentinel" in resp_home.text
+        assert "/api/v1/test_pass" in resp_home.text
 
-    # Test API Clear Report
-    resp_clear = client.post("/api/report/clear")
-    assert resp_clear.status_code == 200
-    assert resp_clear.json()["total_endpoints"] == 0
-    assert get_active_report().total_endpoints == 0
+        # Test Endpoint Detail Page
+        resp_detail = client.get("/endpoint/detail?index=1")
+        assert resp_detail.status_code == 200
+        assert "/api/v1/test_warn" in resp_detail.text
+        assert "Extra field warn" in resp_detail.text
+
+        # Test API Get Report
+        resp_api = client.get("/api/report")
+        assert resp_api.status_code == 200
+        data = resp_api.json()
+        assert data["summary"]["total_endpoints"] == 3
+
+        # Test API Export JSON
+        resp_export_json = client.get("/api/export/json")
+        assert resp_export_json.status_code == 200
+        assert "attachment; filename=\"validation_report.json\"" in resp_export_json.headers["content-disposition"]
+        loaded_exported = json.loads(resp_export_json.content)
+        assert loaded_exported["summary"]["total_endpoints"] == 3
+
+        # Test API Export HTML
+        resp_export_html = client.get("/api/export/html")
+        assert resp_export_html.status_code == 200
+        assert "attachment; filename=\"validation_report.html\"" in resp_export_html.headers["content-disposition"]
+        assert "<!DOCTYPE html>" in resp_export_html.text
+
+        # Test API Append Result
+        append_data = {
+            "endpoint": "/api/v1/live_stream",
+            "method": "POST",
+            "status_code": 200,
+            "validation_status": "WARNING",
+            "severity": "WARNING",
+            "differences": [{"issue_type": "EXTRA_FIELD", "message": "Live drift detected"}],
+        }
+        resp_append = client.post("/api/report/append", json=append_data)
+        assert resp_append.status_code == 200
+        assert resp_append.json()["status"] == "success"
+
+        # Verify appended record appears in latest report
+        resp_after_append = client.get("/api/report")
+        data_after = resp_after_append.json()
+        assert data_after["summary"]["total_endpoints"] == 4
+        assert data_after["results"][0]["endpoint"] == "/api/v1/live_stream"
+
+        # Test Selective Persistence: ignores PASSED when enabled
+        original_selective = settings.selective_persistence
+        try:
+            settings.selective_persistence = True
+            passed_data = {
+                "endpoint": "/api/v1/ignore_me",
+                "method": "GET",
+                "status_code": 200,
+                "validation_status": "PASSED",
+                "differences": [],
+            }
+            resp_skipped = client.post("/api/report/append", json=passed_data)
+            assert resp_skipped.status_code == 200
+            assert resp_skipped.json()["status"] == "skipped"
+        finally:
+            settings.selective_persistence = original_selective
+
+        # Test API Clear Report
+        resp_clear = client.post("/api/report/clear")
+        assert resp_clear.status_code == 200
+        assert resp_clear.json()["status"] == "cleared"
+        assert resp_clear.json()["total_endpoints"] == 0
+
+        # Verify DB is now empty
+        resp_after_clear = client.get("/api/report")
+        assert resp_after_clear.json()["summary"]["total_endpoints"] == 0
 
 
 def test_timeline_computation_empty():

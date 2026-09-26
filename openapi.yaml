@@ -1,65 +1,91 @@
 openapi: 3.0.3
 info:
-  title: API Sentinel - Demo Spec v2 (Aligned Updated Contract)
-  version: 2.0.0
-  description: >-
-    Version 2.0.0 (Updated Contract) — Fully documents debug_internal_id
-    and adjusts login schema to match live backend implementation.
-    Result when tested against example_app: All endpoints PASS cleanly (0 drifts).
-servers:
-  - url: http://127.0.0.1:8000
-    description: Demo API Server
+  title: Target API Specification
+  description: >
+    OpenAPI contract used by APISentinelMiddleware to validate runtime
+    request/response payloads.  Drift from this contract is surfaced in
+    real-time via Rich-formatted terminal alerts.
+  version: 1.0.0
 
 paths:
+
+  # ── User endpoints ──────────────────────────────────────────────────────
   /api/v1/users:
     get:
+      operationId: listUsers
       summary: List all users
-      description: Returns list of active users with role and department info.
+      tags: [users]
+      parameters:
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         '200':
-          description: A list of users
+          description: Paginated list of user objects
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserV2'
+                  $ref: '#/components/schemas/UserResponse'
+
     post:
-      summary: Register a new user
+      operationId: createUser
+      summary: Create a new user account
+      tags: [users]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateUserRequest'
+              $ref: '#/components/schemas/UserCreateRequest'
       responses:
         '201':
-          description: Created user
+          description: User created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserV2'
+                $ref: '#/components/schemas/UserResponse'
 
   /api/v1/users/{id}:
     get:
-      summary: Get user profile with debug telemetry
+      operationId: getUserById
+      summary: Retrieve a single user by numeric ID
+      tags: [users]
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
+            minimum: 1
       responses:
         '200':
-          description: User profile including documented debug_internal_id
+          description: User object
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserV2'
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
+  # ── Auth endpoints ──────────────────────────────────────────────────────
   /api/v1/auth/login:
     post:
-      summary: User login
+      operationId: loginUser
+      summary: Authenticate a user and issue a JWT access token
+      tags: [auth]
       requestBody:
         required: true
         content:
@@ -68,62 +94,89 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Login response with bearer token
+          description: Authentication successful — JWT returned
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - access_token
-                properties:
-                  access_token:
-                    type: string
-                  token_type:
-                    type: string
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   schemas:
-    UserV2:
-      type: object
-      required:
-        - id
-        - name
-        - email
-        - role
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-        role:
-          type: string
-          enum: [admin, user, guest]
-        debug_internal_id:
-          type: string
-          description: Internal diagnostic identifier for debugging
 
-    CreateUserRequest:
+    # ── Reusable request bodies ───────────────────────────────────────────
+    UserCreateRequest:
       type: object
-      required:
-        - name
-        - email
+      required: [name, email]
       properties:
         name:
           type: string
+          example: Jane Doe
         email:
           type: string
+          format: email
+          example: jane@example.com
         role:
           type: string
+          example: user
 
     LoginRequest:
       type: object
-      required:
-        - username
-        - password
+      required: [username, password]
       properties:
         username:
           type: string
+          example: alice
         password:
           type: string
+          format: password
+          example: secret
+
+    # ── Reusable response bodies ──────────────────────────────────────────
+    UserResponse:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Alice Wonderland
+        email:
+          type: string
+          format: email
+          example: alice@example.com
+        role:
+          type: string
+          example: admin
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-01T00:00:00Z"
+
+    LoginResponse:
+      type: object
+      # Both fields are required — ``example_app.py`` omits ``token_type``
+      # intentionally so Sentinel fires a MISSING_REQUIRED_FIELD alert.
+      required: [access_token, token_type]
+      properties:
+        access_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo.signature"
+        token_type:
+          type: string
+          example: bearer
+
+    ErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          example: "Resource not found."
