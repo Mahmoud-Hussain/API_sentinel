@@ -224,7 +224,7 @@ class TestLoadOpenAPISpec:
 
     def test_load_actual_project_spec(self):
         """Load the actual project openapi.yaml if it exists."""
-        project_spec = "/workspace/uploads/API_sentinel/openapi.yaml"
+        project_spec = os.path.join(os.path.dirname(__file__), "..", "openapi.yaml")
         if os.path.exists(project_spec):
             spec = load_openapi_spec(project_spec)
             assert spec["openapi"] == "3.0.3"

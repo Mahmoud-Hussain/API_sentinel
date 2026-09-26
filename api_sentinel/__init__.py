@@ -21,7 +21,7 @@ from api_sentinel.validation_report import (
     ValidationStatus,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.1.3"
 
 __all__ = [
     "APISentinelMiddleware",

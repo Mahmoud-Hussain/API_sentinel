@@ -50,10 +50,20 @@ STATIC_CANDIDATES = [
 STATIC_DIR = next((p for p in STATIC_CANDIDATES if os.path.isdir(p)), os.path.join(ROOT_DIR, "static"))
 BASE_DIR = ROOT_DIR if os.path.isdir(os.path.join(ROOT_DIR, "templates")) else PKG_DIR
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+
+from api_sentinel import __version__
+
 app = FastAPI(
     title="API Sentinel Dashboard",
     description="Real-time OpenAPI schema drift & validation dashboard",
-    version="0.1.0",
+    version=__version__,
+    lifespan=lifespan,
 )
 
 # Mount static files and templates
@@ -61,11 +71,6 @@ if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
-
-
-@app.on_event("startup")
-async def on_startup():
-    await init_db()
 
 
 async def fetch_aggregate_report() -> AggregateReport:
@@ -211,6 +216,7 @@ async def clear_report():
     """Clears all validation results from the database."""
     try:
         async with AsyncSessionLocal() as session:
+            await session.execute(delete(DifferenceRecord))
             await session.execute(delete(ValidationReportRecord))
             await session.commit()
         return {"status": "cleared", "total_endpoints": 0}
