@@ -196,7 +196,7 @@ class TestSpecValidator:
         from api_sentinel.spec_validator import validate_openapi_spec
         res = validate_openapi_spec(SPEC_PATH)
         assert res.is_valid
-        assert res.summary["title"] == "Target API Specification"
+        assert res.summary["title"] == "API Sentinel - Demo Spec"
         assert res.summary["paths_count"] > 0
         assert len(res.summary["endpoints"]) > 0
 

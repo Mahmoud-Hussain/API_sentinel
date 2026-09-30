@@ -1,11 +1,14 @@
 openapi: 3.0.3
 info:
-  title: Target API Specification
-  description: >
-    OpenAPI contract used by APISentinelMiddleware to validate runtime
-    request/response payloads.  Drift from this contract is surfaced in
-    real-time via Rich-formatted terminal alerts.
+  title: API Sentinel - Demo Spec
   version: 1.0.0
+  description: >-
+    OpenAPI contract used by API Sentinel to validate runtime
+    request/response payloads. Drift from this contract is surfaced in
+    real-time via Rich-formatted terminal alerts.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Demo API Server
 
 paths:
 
@@ -162,8 +165,6 @@ components:
 
     LoginResponse:
       type: object
-      # Both fields are required — ``example_app.py`` omits ``token_type``
-      # intentionally so Sentinel fires a MISSING_REQUIRED_FIELD alert.
       required: [access_token, token_type]
       properties:
         access_token:
